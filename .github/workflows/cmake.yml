@@ -20,8 +20,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Prepare packages
-      run: sudo apt install libgtest-dev
+    - name: Install packages
+      run: sudo apt install -y libgtest-dev g++-12 libstdc++-12-dev
+
+    - name: Update alternatives
+      run: sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && sudo update-alternatives --auto g++ 
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
