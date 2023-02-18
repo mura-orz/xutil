@@ -29,7 +29,7 @@ jobs:
     - name: Get googletest
       # Furthermore, prebuilt binaries of the libgtest-dev package cannot used here because they are built by g++11 by default, too.
       # Thus, it uses not the libgtest-dev but source set of googletest directly instead.
-      run: wget https://github.com/google/googletest/archive/refs/heads/main.zip && unzip main.zip && pushd googletest-main && cmake . && make && make install && popd
+      run: wget https://github.com/google/googletest/archive/refs/heads/main.zip && unzip main.zip && pushd googletest-main && cmake . && make && sudo make install && popd
 
     - name: Update alternatives
       run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && sudo update-alternatives --auto g++ 
