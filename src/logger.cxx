@@ -68,9 +68,17 @@ logger_t::log_(level_t level, std::optional<std::source_location> const& pos, st
 		std::tm						lt;
 		std::chrono::microseconds	ms;
 		{
-			std::lock_guard	lock{mutex_};
 			auto const		tt{std::chrono::system_clock::to_time_t(now)};
-			lt	= *std::localtime(&tt);
+#if defined(xxx_win32)
+			::localtime_s(&tt, &lt);
+#elif defined(xxx_posix)
+			::localtime_r(&tt, &lt);
+#else
+			{
+				std::lock_guard	lock{mutex_};
+				lt	= *std::localtime(&tt);
+			}
+#endif
 			ms	= std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1s;
 		}
 
