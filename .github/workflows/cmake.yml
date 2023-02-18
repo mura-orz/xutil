@@ -26,7 +26,7 @@ jobs:
       run: sudo apt install -y gcc-12 g++-12 libstdc++-12-dev unzip
 
     - name: Get googletest
-      run: wget https://github.com/google/googletest/archive/refs/heads/main.zip && unzip googletest-main.zip
+      run: wget https://github.com/google/googletest/archive/refs/heads/main.zip && unzip main.zip
 
     - name: Update alternatives
       run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && sudo update-alternatives --auto g++ 
