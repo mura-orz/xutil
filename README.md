@@ -59,5 +59,5 @@ This library conforms to the following specifications:
 
 ### To generate document
 
-	$ doxygen
+	$ doxygen doc/Doxyfile
 
