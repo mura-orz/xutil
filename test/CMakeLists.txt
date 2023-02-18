@@ -10,13 +10,27 @@ set(CMAKE_CXX_EXTENSIONS		OFF)
 find_package(Threads		REQUIRED)	
 cmake_policy(SET			CMP0076		NEW)	# converts relative paths to absolute
 
+# This unit test implementation requires C++17 feature on regex, which is supported since g++12.
+# On Ubuntu 20.04 of GitHub Action, default version of g++ cannot be used here because of version 11.
+# Furthermore, prebuilt binaries of the gtest package cannot used here because they are built by g++11
+# of the default, too.
+# Thus, it uses not the $GTEST_BOTH_LIBRARIES but gtest_all_test.cc directly instead. 
+find_file (GTest_main		gtest_main.cc	HINTS /usr/src/googletest/googletest/src/)
+find_file (GTest_all		gtest-all.cc	HINTS /usr/src/googletest/googletest/src/)
+find_path (GTest_inc		src				HINTS /usr/src/googletest/googletest)
 find_package (GTest)
+message("found: ${GTEST_FOUND}")
+message("inc: ${GTest_inc}")
+message("main: ${GTest_main}")
+message("all: ${GTest_all}")
 if (GTest_FOUND)
 	enable_testing()
 
 	add_executable				(test)
 	target_sources				(test	PRIVATE
 		ut.cxx
+		${GTest_all}
+		${GTest_main}
 	)
 	target_compile_definitions	(test	PUBLIC
 		$<$<CONFIG:Debug>:			_DEBUG>
@@ -28,7 +42,7 @@ if (GTest_FOUND)
 	add_test					(unittest		ut.exe)
 	target_compile_features		(test	PRIVATE		cxx_std_20)
 	target_compile_options		(xxx	PRIVATE		${VALIDATOR} ${OPTIMIZER} ${LANG})
-	target_include_directories	(test	PRIVATE		"..")
-	target_link_libraries		(test	PRIVATE		xxx ${GTEST_BOTH_LIBRARIES})
+	target_include_directories	(test	PRIVATE		".." ${GTest_inc})
+	target_link_libraries		(test	PRIVATE		xxx )
 	
 endif()
