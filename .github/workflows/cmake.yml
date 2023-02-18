@@ -21,12 +21,15 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install packages
+      # This unit test -- not this library itself -- implementation requires C++17 feature on regex, which is supported since g++12.
       # On using g++, the std::regex_constants::multiline of C++17 requires version.12 or higher.
       # But currently, Ubuntu of GitHub Actions is version 20.04, which default g++ of is version 11.
       run: sudo apt install -y gcc-12 g++-12 libstdc++-12-dev unzip
 
     - name: Get googletest
-      run: wget https://github.com/google/googletest/archive/refs/heads/main.zip && unzip main.zip
+      # Furthermore, prebuilt binaries of the libgtest-dev package cannot used here because they are built by g++11 by default, too.
+      # Thus, it uses not the libgtest-dev but source set of googletest directly instead.
+      run: wget https://github.com/google/googletest/archive/refs/heads/main.zip && unzip main.zip && pushd googletest-main && cmake . && make && make install && popd
 
     - name: Update alternatives
       run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 12 && sudo update-alternatives --auto g++ 
