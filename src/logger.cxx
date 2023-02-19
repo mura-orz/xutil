@@ -131,6 +131,7 @@ logger_t::log_(level_t level, std::optional<std::source_location> const& pos, st
 				std::filesystem::rename(path_, get_previous_path_());
 				open_logfile_(path_, daily_);
 			}
+			daily_	= lt;
 
 			if(ofs_.is_open()) {
 				ofs_ << str << '\n';
