@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <optional>
+#include <ctime>
 
 #if 201703L <= __cplusplus && __has_include(<source_location>)
 #include <source_location>
@@ -424,29 +425,28 @@ public:
 	///	@param[in]		logger		External logger name.
 	///	@param[in]		console		Whether dump it to standard error or not.
 	///	@param[in]		daily		log file is daily or not..
-	logger_t(level_t level, std::filesystem::path const& path, std::string_view const logger, bool console, bool daily=false) : level_{level}, path_{path}, logger_{logger}, console_{console}, daily_{daily}, ofs_{}, mutex_{}, file_mutex_{}, console_mutex_{}
-	{
-		if ( ! path_.empty()) {
-			ofs_.exceptions(std::ios::badbit|std::ios::failbit);
-			ofs_.open(path_, std::ios::out|std::ios::app|std::ios::binary);
-			ofs_.exceptions(std::ios::badbit);
-		}
-	}
+	logger_t(level_t level, std::filesystem::path const& path, std::string_view const logger, bool console, bool daily=false);
 	///	@brief	Constructor.
 	logger_t() : level_{level_t::Info}, path_{}, logger_{}, console_{true}, daily_{}, ofs_{}, mutex_{}, file_mutex_{}, console_mutex_{}
 	{}
 private:
 	void	log_(level_t level, std::optional<std::source_location> const& pos, std::string_view const message);
+	void	get_local_now_(std::chrono::system_clock::time_point const& now, std::tm& tm) const;
+	void	open_logfile_(std::filesystem::path const& path, std::optional<std::tm> const& lt);
+	bool	needs_rotation(std::tm const& lt) const {
+		return daily_ && (daily_->tm_year != lt.tm_year || daily_->tm_yday != lt.tm_yday) && std::filesystem::exists(path_);
+	}
+	std::filesystem::path	get_previous_path_() const;
 private:
 	level_t					level_;		///< Logger level.
 	std::filesystem::path	path_;		///< The path of log file.
 	std::string				logger_;	///< External logger name.
 	bool					console_;	///< Whether dump it to standard error or not.
-	bool					daily_;		///< Whether log file is daily or not.
+	std::optional<std::tm>	daily_;		///< Whether log file is daily or not.
 	std::ofstream			ofs_;		///< Output file stream.
-	std::mutex				mutex_;		///< Mutex.
-	std::mutex				file_mutex_;	///< Mutex.
-	std::mutex				console_mutex_;	///< Mutex.
+	mutable std::mutex		mutex_;		///< Mutex.
+	mutable std::mutex		file_mutex_;	///< Mutex.
+	mutable std::mutex		console_mutex_;	///< Mutex.
 };
 
 #endif	// xxx_no_logging

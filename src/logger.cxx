@@ -41,6 +41,11 @@ namespace log {
 
 #if ! defined(xxx_no_logging)
 
+logger_t::logger_t(level_t level, std::filesystem::path const& path, std::string_view const logger, bool console, bool daily) : level_{level}, path_{}, logger_{logger}, console_{console}, daily_{}, ofs_{}, mutex_{}, file_mutex_{}, console_mutex_{}
+{
+	set_path(path, daily);
+}
+
 void
 logger_t::log_(level_t level, std::optional<std::source_location> const& pos, std::string_view const message)
 {
@@ -61,26 +66,13 @@ logger_t::log_(level_t level, std::optional<std::source_location> const& pos, st
 
 	std::ostringstream	oss;
 
+	std::tm						lt{};
 	{
 		using namespace std::chrono_literals;
 
-		auto const					now{ std::chrono::system_clock::now() };
-		std::tm						lt;
-		std::chrono::microseconds	ms;
-		{
-			auto const		tt{std::chrono::system_clock::to_time_t(now)};
-#if defined(xxx_win32)
-			::localtime_s(&tt, &lt);
-#elif defined(xxx_posix)
-			::localtime_r(&tt, &lt);
-#else
-			{
-				std::lock_guard	lock{mutex_};
-				lt	= *std::localtime(&tt);
-			}
-#endif
-			ms	= std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1s;
-		}
+		auto const		now	= std::chrono::system_clock::now();
+		get_local_now_(now, lt);
+		auto const		ms	= std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1s;
 
 		oss << std::put_time(&lt, "%FT%T.")
 			<< std::setfill('0') << std::setw(6) << ms.count()
@@ -125,8 +117,21 @@ logger_t::log_(level_t level, std::optional<std::source_location> const& pos, st
 		});
 	}
 	if( ! path_.empty()) {
-		ignore_exceptions([&str, this]() {
+		ignore_exceptions([&str, &lt, this]() {
 			std::lock_guard lock{file_mutex_};
+
+			if (needs_rotation(lt)) {
+				// Rotates previous log file if necessary.
+				// Closes current log file if exists.
+				if (ofs_.is_open()) {
+					ofs_.close();
+				}
+				ofs_.clear();
+
+				std::filesystem::rename(path_, get_previous_path_());
+				open_logfile_(path_, daily_);
+			}
+
 			if(ofs_.is_open()) {
 				ofs_ << str << '\n';
 				// It does not use std::endl() for performance
@@ -170,26 +175,95 @@ logger_t::log_(level_t level, std::optional<std::source_location> const& pos, st
 }
 
 void
+logger_t::get_local_now_(std::chrono::system_clock::time_point const& now, std::tm& tm) const
+{
+	auto const		tt{std::chrono::system_clock::to_time_t(now)};
+#if defined(xxx_win32)
+	::localtime_s(&tt, &tm);
+#elif defined(xxx_posix)
+	::localtime_r(&tt, &tm);
+#else
+	{
+		std::lock_guard	lock{mutex_};
+		tm	= *std::localtime(&tt);
+	}
+#endif
+}
+
+std::filesystem::path
+logger_t::get_previous_path_() const
+{
+	if ( ! daily_)	throw std::logic_error(__func__);
+
+	std::ostringstream		oss;
+	oss	<< path_.filename().string() << std::put_time(&*daily_, "%Y%m%d");
+	std::string const		base	= oss.str();
+
+	std::filesystem::path	path	= path_;
+	path.replace_filename(base);
+
+	auto const	MAX_RETRY	= 10u;	// It is a magic number.
+	for (auto n=0u; std::filesystem::exists(path); ++n) {
+		path.replace_filename(base + "." + std::to_string(n));
+
+		if (MAX_RETRY < n)	throw std::runtime_error(__func__);
+	}
+
+	return path;
+}
+
+void
+logger_t::open_logfile_(std::filesystem::path const& path, std::optional<std::tm> const& lt)
+{
+	if (ofs_.is_open())		throw std::logic_error(__func__);
+
+	// Updates path.
+	path_		= path;
+	if (path_.empty()) {
+		// Stops log file.
+		daily_	= std::nullopt;		// ignores the lt parameter.
+		return;
+	}
+
+	// Opens a new file.
+	try {
+		ofs_.exceptions(std::ios::badbit|std::ios::failbit);
+		ofs_.open(path, std::ios::app|std::ios::binary);
+		ofs_.exceptions(std::ios::badbit);
+
+		daily_	= lt;	// Stores today or nullopt.
+	} catch (...) {
+		path_.clear();
+		daily_	= std::nullopt;
+		throw;	// Don't take caere of file stream here.
+	}
+}
+
+void
 logger_t::set_path(std::filesystem::path const& path, bool daily)
 {
 	std::lock_guard	l{ file_mutex_ };
+
+	// Closes current log file once if exists.
 	if (ofs_.is_open()) {
 		ofs_.close();
 	}
 	ofs_.clear();
 
-	path_		= path;
-	daily_		= daily;
-	if (path.empty()) {
-		return;
+	// Gets current time.
+	auto const		now		= std::chrono::system_clock::now();
+	std::tm			lt{};
+	get_local_now_(now, lt);
+
+	// rotates previous log file if necessary.
+	if (needs_rotation(lt)) {
+		std::filesystem::rename(path_, get_previous_path_());
 	}
-	try {
-		ofs_.exceptions(std::ios::badbit|std::ios::failbit);
-		ofs_.open(path, std::ios::app|std::ios::binary);
-		ofs_.exceptions(std::ios::badbit);
-	} catch (...) {
-		path_.clear();
-		throw;
+	// Opens a newvlog file if the path is not empty.
+	if (daily) {
+		open_logfile_(path, lt);
+	} else {
+		open_logfile_(path, std::nullopt);
 	}
 }
 

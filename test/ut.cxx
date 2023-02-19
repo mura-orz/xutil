@@ -228,6 +228,7 @@ TEST(test_logger, Default_logger) {
 	std::filesystem::path const		path{"test.log"};
 	auto& logger = xxx::log::logger("");
 	logger.set_console(false);
+	logger.set_path("");
 
 	if (std::filesystem::exists(path)) {
 		std::filesystem::remove(path);
@@ -303,6 +304,7 @@ TEST(test_logger, Default_logger_all) {
 	std::filesystem::path const		path{"test.log"};
 	auto& logger = xxx::log::logger("");
 	logger.set_level(xxx::log::level_t::All);
+	logger.set_path("");
 	logger.set_console(false);
 
 	if (std::filesystem::exists(path)) {
@@ -380,6 +382,7 @@ TEST(test_logger, Logger_level) {
 	std::filesystem::path const		path{"test.log"};
 	auto& logger = xxx::log::logger("");
 	logger.set_level(xxx::log::level_t::Fatal);
+	logger.set_path("");
 	logger.set_console(false);
 
 	if (std::filesystem::exists(path)) {
@@ -523,13 +526,13 @@ TEST(test_logger, Trace) {
 
 TEST(test_logger, Another_logger) {
 	std::filesystem::path const		path{"test2.log"};
+	if (std::filesystem::exists(path)) {
+		std::filesystem::remove(path);
+	}
+
 	xxx::log::add_logger("tag", xxx::log::level_t::All, path, "", false);
 	{
 		auto&	logger	= xxx::log::logger("tag");
-
-		if (std::filesystem::exists(path)) {
-			std::filesystem::remove(path);
-		}
 
 		logger.set_path(path);
 		logger.oops("oops");
