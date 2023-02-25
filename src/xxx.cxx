@@ -7,6 +7,10 @@
 
 #include <xxx/xxx.hxx>
 
+#include <locale>
+#include <iostream>
+#include <stdexcept>
+
 //	@name	xxx
 namespace xxx {
 
@@ -14,6 +18,29 @@ std::uint32_t
 get_version() noexcept
 {
 	return xxx_version;
+}
+
+void
+initialize_cpp(char const* locale)
+{
+	std::ios::sync_with_stdio(false);
+
+	if (locale != nullptr) {
+		try {
+			auto const	loc		= std::locale(locale);
+
+			std::locale::global(loc);
+			std::cin.imbue(loc);	std::cout.imbue(loc);	std::clog.imbue(loc);	std::cerr.imbue(loc);
+			std::wcin.imbue(loc);	std::wcout.imbue(loc);	std::wclog.imbue(loc);	std::wcerr.imbue(loc);
+		} catch (...) {
+			// Try the C locale, which is available typically.
+			auto const	loc		= std::locale("C");
+
+			std::locale::global(loc);
+			std::cin.imbue(loc);	std::cout.imbue(loc);	std::clog.imbue(loc);	std::cerr.imbue(loc);
+			std::wcin.imbue(loc);	std::wcout.imbue(loc);	std::wclog.imbue(loc);	std::wcerr.imbue(loc);
+		}
+	}
 }
 
 }	// namespace xxx

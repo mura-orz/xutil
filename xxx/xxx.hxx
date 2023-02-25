@@ -59,7 +59,15 @@ inline std::uint32_t	get_revision(std::uint32_t version) noexcept         { retu
 ///	@param[in]	version		The library versions, xxx_version macro or result of xxx_version()
 ///	@return		Extra version of the @p version.
 inline std::uint32_t	get_extra_version(std::uint32_t version) noexcept    { return static_cast<std::uint32_t>((version >>  0) & 0x000000FF);  }
-  
+
+/// @brief	Initializes several standard C++ libraries.
+/// @param[in]	locale		Global locale.
+///							If the @p locale is null, this method does not set any locale;
+///							otherwise, the method sets the @p locale up.
+///							Empty string means native locale typically.
+/// @throw	An exception occurred.
+void	 initialize_cpp(char const* locale="");
+
 }	// namespace xxx
 
 #endif	// xxx_HXX_

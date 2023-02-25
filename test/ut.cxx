@@ -18,6 +18,13 @@
 #include <fstream>
 #include <iomanip>
 
+TEST(test_cpp, Initialize) {
+	EXPECT_NO_THROW(xxx::initialize_cpp());
+	EXPECT_NO_THROW(xxx::initialize_cpp(""));
+	EXPECT_NO_THROW(xxx::initialize_cpp("C"));
+	EXPECT_NO_THROW(xxx::initialize_cpp("foobar"));
+}
+
 TEST(test_version, Version) {
 	auto const	head_version	= xxx_version;
 	auto const	body_version	= xxx::get_version();
