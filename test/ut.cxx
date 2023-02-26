@@ -117,7 +117,7 @@ TEST(test_config, MovedOptions) {
 }
 
 TEST(test_config, GoodOptions) {
-	std::unordered_map<std::string,std::string>	options{{"1Aa.-_", "bar"}};
+	std::unordered_map<std::string,std::string>	options{{"Aa1.-_", "bar"}};
 	EXPECT_NO_THROW(xxx::config::configurations_t	config{options});
 }
 
@@ -136,6 +136,14 @@ TEST(test_config, BadOptions) {
 	}
 	{
 		std::unordered_map<std::string,std::string>	options{{"foo$bar", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+	{
+		std::unordered_map<std::string,std::string>	options{{"1", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+	{
+		std::unordered_map<std::string,std::string>	options{{"-", "bar"}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{

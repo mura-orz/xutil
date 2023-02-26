@@ -16,6 +16,9 @@
 
 namespace xxx::config {
 
+/// @brief	Options.
+using options_t	= std::unordered_map<std::string, std::string>;
+
 /// @brief 	Configurations.
 ///		This implementation allows only one value for a key.
 ///		This class is immutable.
@@ -91,32 +94,32 @@ public:
 	explicit	configurations_t(std::filesystem::path const& path);
 	/// @brief	Constructor that gets the options.
 	/// @param[in]	options		Pairs of a key and its value.
-	explicit	configurations_t(std::unordered_map<std::string, std::string> const& options);
+	explicit	configurations_t(options_t const& options);
 	/// @brief	Constructor that gets the options.
 	/// @param[in]	options		Pairs of a key and its value.
-	explicit	configurations_t(std::unordered_map<std::string, std::string>&& options);
+	explicit	configurations_t(options_t&& options);
 	/// @copydoc	configurations_t(std::filesystem::path const&)
 	///			If there are same keys in both the @p options and the file of the @p path, it uses a value of the key in the @p options.
 	/// @param[in]	path		The path of a configuration file.
 	/// @param[in]	options		Pairs of a key and its value.
-	explicit	configurations_t(std::filesystem::path const& path, std::unordered_map<std::string, std::string> const& options);
+	explicit	configurations_t(std::filesystem::path const& path, options_t const& options);
 	/// @copydoc	configurations_t(std::filesystem::path const&)
 	///			If there are same keys in both the @p options and the file of the @p path, it uses a value of the key in the @p options.
 	/// @param[in]	path		The path of a configuration file.
 	/// @param[in]	options		Pairs of a key and its value.
-	explicit	configurations_t(std::filesystem::path const& path, std::unordered_map<std::string, std::string>&& options);
+	explicit	configurations_t(std::filesystem::path const& path, options_t&& options);
 	/// @brief	Constructor.
 	configurations_t() noexcept : config_{} {}
 private:
 	///	@brief	Loads configurations from the @p path.
 	/// @param[in]	config		Configurations.
 	/// @param[in]	path		The path of a configuration file.
-	static void		load_file(std::unordered_map<std::string, std::string>& config, std::filesystem::path const& path);
+	static void		load_file(options_t& config, std::filesystem::path const& path);
 	///	@brief	Validates all the keys in the @p options.
 	/// @param[in]	options		Options to validate.
-	static void		validate_keys(std::unordered_map<std::string, std::string> const& config);
+	static void		validate_keys(options_t const& options);
 private:
-	std::unordered_map<std::string, std::string>	config_;
+	options_t	config_;
 };
 
 template<>	inline std::string		configurations_t::get_as(std::string const& key) const {
