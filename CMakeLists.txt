@@ -53,12 +53,14 @@ add_library					(xxx)
 target_sources				(xxx	PRIVATE
 	src/xxx.cxx
 	src/logger.cxx
+	src/config.cxx
 )
 target_sources				(xxx	PUBLIC
 	xxx/xxx.hxx
 	xxx/exceptions.hxx
 	xxx/finally.hxx
 	xxx/logger.hxx
+	xxx/config.hxx
 )
 target_compile_features		(xxx	PUBLIC		cxx_std_20)
 target_compile_options		(xxx	PUBLIC		${VALIDATOR} ${OPTIMIZER} ${LANG})

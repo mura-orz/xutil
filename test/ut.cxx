@@ -8,6 +8,7 @@
 #include <xxx/exceptions.hxx>
 #include <xxx/finally.hxx>
 #include <xxx/logger.hxx>
+#include <xxx/config.hxx>
 
 #include <gtest/gtest.h>
 
@@ -47,6 +48,155 @@ TEST(test_version, Version) {
 		| xxx::get_revision(head_version) << 8
 		| xxx::get_extra_version(head_version);
 	EXPECT_EQ(head_version, hv);
+}
+
+TEST(test_config, Empty) {
+	using namespace std::string_literals;
+
+	xxx::config::configurations_t	config;
+	EXPECT_FALSE(config.contains("key"));
+	EXPECT_THROW(config.get("key"), std::out_of_range);
+	EXPECT_THROW(config.get_as<std::string>("key"), std::out_of_range);
+	EXPECT_THROW(config.get_as<int>("key"), std::out_of_range);
+	EXPECT_EQ("baz"s, config.get_as<std::string>("key", std::string{"baz"}));
+	EXPECT_EQ("baz"s, config.get_as<std::string>("key", std::move(std::string{"baz"})));
+}
+TEST(test_config, CopiedOptions) {
+	using namespace std::string_literals;
+
+	std::unordered_map<std::string,std::string>	options{
+		{"foo", "bar"}, {"one", "1"},
+		{"t", "true"}, {"f", "false"},
+		{"none", ""}, {"num-alpha", "1a"}
+	};
+	xxx::config::configurations_t	config{options};
+	EXPECT_FALSE(config.contains("key"));
+	EXPECT_TRUE(config.contains("foo"));
+	EXPECT_TRUE(config.contains("one"));
+	EXPECT_TRUE(config.contains("t"));
+	EXPECT_TRUE(config.contains("f"));
+	EXPECT_TRUE(config.contains("none"));
+	EXPECT_EQ("bar"s, config.get("foo"));
+	EXPECT_EQ("1"s, config.get("one"));
+	EXPECT_EQ("true"s, config.get("t"));
+	EXPECT_EQ("false"s, config.get("f"));
+	EXPECT_EQ(""s, config.get("none"));
+	EXPECT_THROW(config.get_as<int>("num-alpha"), std::bad_cast);
+	EXPECT_THROW(config.get("key"), std::out_of_range);
+	EXPECT_EQ("bar"s, config.get_as<std::string>("foo"));
+	EXPECT_EQ(""s, config.get_as<std::string>("none"));
+	EXPECT_TRUE(config.get_as<bool>("one"));
+	EXPECT_TRUE(config.get_as<bool>("t"));
+	EXPECT_FALSE(config.get_as<bool>("f"));
+	EXPECT_FALSE(config.get_as<bool>("none"));
+	EXPECT_THROW(config.get_as<std::string>("key"), std::out_of_range);
+	EXPECT_THROW(config.get_as<int>("none"), std::bad_cast);
+	EXPECT_EQ(1, config.get_as<int>("one"));
+	EXPECT_THROW(config.get_as<int>("foo"), std::bad_cast);
+	EXPECT_EQ("bar"s, config.get_as<std::string>("foo", std::string{"baz"}));
+	EXPECT_EQ("baz"s, config.get_as<std::string>("key", std::string{"baz"}));
+	EXPECT_EQ(10, config.get_as<int>("none", 10));
+	EXPECT_EQ(0, config.get_as<int>("key", 0));
+	EXPECT_EQ(0, config.get_as<int>("foo", 0));
+	EXPECT_EQ("bar"s, config.get_as<std::string>("foo", std::move(std::string{"baz"})));
+	EXPECT_EQ("baz"s, config.get_as<std::string>("key", std::move(std::string{"baz"})));
+	EXPECT_EQ(10, config.get_as<int>("none", std::move(10)));
+	EXPECT_EQ(0, config.get_as<int>("key", std::move(0)));
+	EXPECT_EQ(0, config.get_as<int>("foo", std::move(0)));
+	EXPECT_EQ("bar"s, config.get_as("foo", "baz"s));
+	EXPECT_EQ("baz"s, config.get_as("key", "baz"s));
+	EXPECT_EQ(0, config.get_as("foo", 0));
+	EXPECT_EQ("bar"s, config.get_as("foo", std::move("baz"s)));
+	EXPECT_EQ("baz"s, config.get_as("key", std::move("baz"s)));
+	EXPECT_EQ(0, config.get_as("foo", std::move(0)));
+}
+
+TEST(test_config, MovedOptions) {
+	xxx::config::configurations_t	config{std::move(std::unordered_map<std::string,std::string>{{"foo", "bar"}})};
+	EXPECT_TRUE(config.contains("foo"));
+}
+
+TEST(test_config, GoodOptions) {
+	std::unordered_map<std::string,std::string>	options{{"1Aa.-_", "bar"}};
+	EXPECT_NO_THROW(xxx::config::configurations_t	config{options});
+}
+
+TEST(test_config, BadOptions) {
+	{
+		std::unordered_map<std::string,std::string>	options{{" foo ", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+	{
+		std::unordered_map<std::string,std::string>	options{{"foo bar", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+	{
+		std::unordered_map<std::string,std::string>	options{{"", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+	{
+		std::unordered_map<std::string,std::string>	options{{"foo$bar", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+	{
+		std::unordered_map<std::string,std::string>	options{{"#foo$bar", "bar"}};
+		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
+	}
+}
+
+TEST(test_config, BadConf) {
+	using namespace std::string_literals;
+	EXPECT_THROW(xxx::config::configurations_t	config{"nothing.conf"}, std::ios::failure);
+	{	std::ofstream	ofs{"test.conf"};	ofs	<< "a" << std::endl;	}
+	EXPECT_THROW(xxx::config::configurations_t	config{"test.conf"}, std::runtime_error);
+	{	std::ofstream	ofs{"test.conf"};	ofs	<< "$=a" << std::endl;	}
+	EXPECT_THROW(xxx::config::configurations_t	config{"test.conf"}, std::runtime_error);
+	{	std::ofstream	ofs{"test.conf"};	ofs	<< "=a" << std::endl;	}
+	EXPECT_THROW(xxx::config::configurations_t	config{"test.conf"}, std::runtime_error);
+	{	std::ofstream	ofs{"test.conf"};	ofs	<< " #" << std::endl;	}
+	EXPECT_THROW(xxx::config::configurations_t	config{"test.conf"}, std::runtime_error);
+
+	std::filesystem::remove("test.conf");
+}
+
+TEST(test_config, LoadOptions) {
+	using namespace std::string_literals;
+	{
+		std::ofstream	ofs{"test.conf"};
+		ofs	<< std::endl
+			<< " " << std::endl
+			<<	"\t" << std::endl
+			<<	"#aaa" << std::endl
+			<<	"a=b" << std::endl
+			<<	" c = d" << std::endl
+			<<	" e = f " << std::endl
+			<<	"\tg\t=\th" << std::endl
+			<<	"i=x" << std::endl
+			<<	"i=" << std::endl
+			<<	"j=\t" << std::endl;
+	}
+	EXPECT_NO_THROW(xxx::config::configurations_t	config{"test.conf"});
+	xxx::config::configurations_t	config{"test.conf"};
+	EXPECT_FALSE(config.contains("\t"));
+	EXPECT_FALSE(config.contains(""));
+	EXPECT_FALSE(config.contains("#aaa"));
+	EXPECT_FALSE(config.contains("aaa"));
+	EXPECT_EQ("b"s, config.get("a"));
+	EXPECT_EQ("d"s, config.get("c"));
+	EXPECT_EQ("f "s, config.get("e"));
+	EXPECT_EQ("h"s, config.get("g"));
+	EXPECT_EQ(""s, config.get("i"));
+	EXPECT_EQ(""s, config.get("j"));
+
+	std::filesystem::remove("test.conf");
+}
+
+TEST(test_config, Copy) {
+	using namespace std::string_literals;
+	xxx::config::configurations_t	config{{std::make_pair("a"s,"b"s)}};
+	EXPECT_EQ("b"s, config.get("a"));
+	auto const	copied	= config;
+	EXPECT_EQ("b"s, copied.get("a"));
 }
 
 namespace {
@@ -529,6 +679,10 @@ TEST(test_logger, Trace) {
 	logger.set_path("");
 	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_arg_3_re));
 	logger.set_path(path);
+
+	if (std::filesystem::exists(path)) {
+		std::filesystem::remove(path);
+	}
 }
 
 TEST(test_logger, Another_logger) {
@@ -608,4 +762,8 @@ TEST(test_logger, Another_logger) {
 	}
 	xxx::log::remove_logger("tag");
 	EXPECT_THROW(xxx::log::logger("tag"), std::invalid_argument);
+
+	if (std::filesystem::exists(path)) {
+		std::filesystem::remove(path);
+	}
 }
