@@ -23,35 +23,49 @@ is_invalid_key(std::string_view const key) {
 	return ! std::regex_match(key.cbegin(), key.cend(), key_re);
 }
 
-configurations_t::configurations_t(std::unordered_map<std::string, std::string> const& options) : config_{options} {
+void
+configurations_t::validate_keys(std::unordered_map<std::string, std::string> const& options) {
 #if __has_include(<ranges>)
-	auto const	keys	= config_ | std::views::keys;
+	auto const	keys	= options | std::views::keys;
 	if (auto const itr = std::ranges::find_if(keys, is_invalid_key); itr != std::ranges::cend(keys)) {
 		throw std::invalid_argument(__func__);
 	}
 #else
 	using std::cbegin, std::cend;
-	if (auto const itr = std::find_if(cbegin(config_), cend(config_), [](auto const& kv) { return is_invalid_key(kv.first); }); itr != cend(config_)) {
+	if (auto const itr = std::find_if(cbegin(options), cend(options), [](auto const& kv) { return is_invalid_key(kv.first); }); itr != cend(options)) {
 		throw std::invalid_argument(__func__);
 	}
 #endif
- }
+}
+
+configurations_t::configurations_t(std::unordered_map<std::string, std::string> const& options) : config_{options} {
+	validate_keys(config_);
+}
 
 configurations_t::configurations_t(std::unordered_map<std::string, std::string>&& options) : config_{std::move(options)} {
-#if __has_include(<ranges>)
-	auto const	keys	= config_ | std::views::keys;
-	if (auto const itr = std::ranges::find_if(keys, is_invalid_key); itr != std::ranges::cend(keys)) {
-		throw std::invalid_argument(__func__);
-	}
-#else
-	using std::cbegin, std::cend;
-	if (auto const itr = std::find_if(cbegin(config_), cend(config_), [](auto const& kv) { return is_invalid_key(kv.first); }); itr != cend(config_)) {
-		throw std::invalid_argument(__func__);
-	}
-#endif
- }
+	validate_keys(config_);
+}
 
-configurations_t::configurations_t(std::filesystem::path const& path) {
+configurations_t::configurations_t(std::filesystem::path const& path) : config_{} {
+	load_file(config_, path);
+}
+
+configurations_t::configurations_t(std::filesystem::path const& path, std::unordered_map<std::string, std::string> const& options) : config_{options} {
+	validate_keys(config_);
+	decltype(config_)	config;
+	load_file(config, path);
+	config_.merge(config);
+}
+
+configurations_t::configurations_t(std::filesystem::path const& path, std::unordered_map<std::string, std::string>&& options) : config_{std::move(options)} {
+	validate_keys(config_);
+	decltype(config_)	config;
+	load_file(config, path);
+	config_.merge(config);
+}
+
+void
+configurations_t::load_file(std::unordered_map<std::string, std::string>& config, std::filesystem::path const& path) {
 	// Opens the file
 	std::ifstream	ifs;
 	ifs.exceptions(std::ios::badbit|std::ios::failbit);
@@ -71,8 +85,8 @@ configurations_t::configurations_t(std::filesystem::path const& path) {
 		}
 		auto const	key		= result.str(1);
 		auto const	value	= result.str(2);
-		config_[key]	= value;	// It overrides previous value if the key already has existed.
-	}	
+		config[key]	= value;	// It overrides previous value if the key already has existed.
+	}
 }
 
 bool

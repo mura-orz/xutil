@@ -199,6 +199,28 @@ TEST(test_config, Copy) {
 	EXPECT_EQ("b"s, copied.get("a"));
 }
 
+TEST(test_config, OptionsAndFile) {
+	using namespace std::string_literals;
+	{
+		std::ofstream	ofs{"test.conf"};
+		ofs	<<	"A=B" << std::endl;
+		ofs	<<	"a=b" << std::endl;
+	}
+	std::unordered_map<std::string,std::string>	options{{"a"s, "c"s}, {"x"s, "z"s}};
+
+	xxx::config::configurations_t	config1{"test.conf", options};
+	EXPECT_EQ("B", config1.get("A"));
+	EXPECT_EQ("c", config1.get("a"));
+	EXPECT_EQ("z", config1.get("x"));
+
+	xxx::config::configurations_t	config2{"test.conf", std::move(options)};
+	EXPECT_EQ("B", config2.get("A"));
+	EXPECT_EQ("c", config2.get("a"));
+	EXPECT_EQ("z", config2.get("x"));
+
+	std::filesystem::remove("test.conf");
+}
+
 namespace {
 
 bool
