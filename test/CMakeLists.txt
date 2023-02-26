@@ -29,7 +29,7 @@ if (GTest_FOUND)
 		$<${WIN32}:					xxx_win32>
 	)
 	target_compile_features		(test	PRIVATE		cxx_std_20)
-	target_compile_options		(xxx	PRIVATE		${VALIDATOR} ${OPTIMIZER} ${LANG})
+	target_compile_options		(test	PRIVATE		${VALIDATOR} ${OPTIMIZER} ${LANG})
 	target_include_directories	(test	PRIVATE		".." ${GTEST_INCLUDE_DIRS})
 	target_link_libraries		(test	PRIVATE		xxx ${GTEST_BOTH_LIBRARIES})
 
