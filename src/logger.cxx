@@ -180,7 +180,7 @@ logger_t::get_local_now_(std::chrono::system_clock::time_point const& now, std::
 {
 	auto const		tt{std::chrono::system_clock::to_time_t(now)};
 #if defined(xxx_win32)
-	::localtime_s(&tt, &tm);
+	::localtime_s(&tm, &tt);
 #elif defined(xxx_posix)
 	::localtime_r(&tt, &tm);
 #else
