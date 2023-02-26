@@ -34,7 +34,7 @@ initialize_cpp(char const* locale)
 			std::wcin.imbue(loc);	std::wcout.imbue(loc);	std::wclog.imbue(loc);	std::wcerr.imbue(loc);
 		} catch (...) {
 			// Try the C locale, which is available typically.
-			auto const	loc		= std::locale("C");
+			auto const	loc		= std::locale::classic();
 
 			std::locale::global(loc);
 			std::cin.imbue(loc);	std::cout.imbue(loc);	std::clog.imbue(loc);	std::cerr.imbue(loc);
