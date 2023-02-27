@@ -1,8 +1,8 @@
 ///	@file
-///	@brief		Main entry of test.
+///	@brief		Main entry of sample.
 ///	@pre		ISO/IEC 14882:2017
 ///	@author		Mura
-///	@copyright	(C) 2018-, Mura. All rights reserved.
+///	@copyright	(C) 2023-, Mura. All rights reserved.
 
 #include <xxx/xxx.hxx>
 #include <xxx/exceptions.hxx>
