@@ -75,3 +75,4 @@ target_include_directories	(xxx	PUBLIC		".")
 target_link_libraries		(xxx	INTERFACE	${GCLIB})
 
 add_subdirectory			(test)
+add_subdirectory			(samples)
