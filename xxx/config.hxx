@@ -10,6 +10,7 @@
 
 #include <filesystem>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <sstream>
 #include <stdexcept>
@@ -28,6 +29,8 @@ public:
 	/// @param[in]	key				A key to check .
 	/// @return	It returns true if the key exists; otherwise it returns false.
 	bool	contains(std::string const& key) const noexcept;
+
+	std::unordered_set<std::string>		keys() const;
 
 	/// @brief 	Gets a value.
 	/// @param[in]	key				A key to get.

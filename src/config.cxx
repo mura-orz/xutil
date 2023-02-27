@@ -95,4 +95,17 @@ configurations_t::contains(std::string const& key) const noexcept {
 	return config_.contains(key);
 }
 
+std::unordered_set<std::string>
+configurations_t::keys() const {
+#if __has_include(<ranges>)
+	auto const	keys	= config_ | std::views::keys | std::views::common;
+	return std::unordered_set(std::ranges::cbegin(keys), std::ranges::cend(keys));
+#else
+	std::unordered_set<std::string>		keys;
+	std::transform(config_.cbegin(), config_.cend(), std::inserter(keys, keys.end()),
+		[](auto const& a){ return a.first; });
+	return keys;
+#endif
+}
+
 }	// namespace xxx::config
