@@ -15,6 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <regex>
 #include <chrono>
 #include <ctime>
 
@@ -40,6 +41,10 @@ namespace xxx {
 namespace log {
 
 #if ! defined(xxx_no_logging)
+
+namespace {
+std::regex const		function_name_re{ R"(^.*[ \t\v\r\n\f]+((?:::)?(?:[A-Za-z_][<>A-Za-z_0-9]*::)*[A-Za-z_][<>A-Za-z_0-9]*)\(.*$)" };
+}
 
 logger_t::logger_t(level_t level, std::filesystem::path const& path, std::string_view const logger, bool console, bool daily) : level_{level}, path_{}, logger_{logger}, console_{console}, daily_{}, ofs_{}, mutex_{}, file_mutex_{}, console_mutex_{}
 {
@@ -79,7 +84,9 @@ logger_t::log_(level_t level, std::optional<std::source_location> const& pos, st
 			<< std::put_time(&lt, "%z")
 			<< Lv[static_cast<int>(level)];
 		if(pos) {
-			oss << "{" << filename << ':' << std::setw(5) << std::setfill('_') <<  pos->line() << "} " << pos->function_name() << " ";
+			std::cmatch				result;
+			oss << "{" << filename << ':' << std::setw(5) << std::setfill('_') <<  pos->line() << "} ";
+			oss << (std::regex_match(pos->function_name(), result, function_name_re) ? result.str(1) : pos->function_name()) << " ";
 		}
 		oss << message;
 	}
