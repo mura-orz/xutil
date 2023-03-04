@@ -9,6 +9,7 @@
 #include <xxx/finally.hxx>
 #include <xxx/logger.hxx>
 #include <xxx/config.hxx>
+#include <xxx/files.hxx>
 
 #include <gtest/gtest.h>
 
@@ -197,6 +198,55 @@ TEST(test_config, LoadOptions) {
 	EXPECT_EQ(""s, config.get("j"));
 
 	std::filesystem::remove("test.conf");
+}
+
+TEST(test_files, read_file) {
+	using namespace std::string_literals;
+	std::filesystem::path const		path{"test.txt"};
+	std::ostringstream		oss;	oss << "test1" << std::endl << "test2" << std::endl;
+	
+	EXPECT_THROW(xxx::file::read_whole<char>(""), std::invalid_argument);
+	EXPECT_THROW(xxx::file::read_whole<char>(path), std::invalid_argument);
+
+	{	std::ofstream	ofs{path};	if (ofs)	ofs	<< oss.str();	}
+
+	auto const	file1	= xxx::file::read_whole<char>(path, false);
+	EXPECT_EQ("test1\ntest2\n"s, file1);
+	auto const	file2	= xxx::file::read_whole<char>(path, true);
+	EXPECT_EQ(oss.str(), file2);
+	auto const	file3	= xxx::file::read_whole<char>(path);
+	EXPECT_EQ(oss.str(), file3);
+
+	std::filesystem::remove(path);
+}
+
+TEST(test_files, read_line) {
+	using namespace std::string_literals;
+	std::filesystem::path const		path{"test.txt"};
+	std::ostringstream		oss;	oss << "test1" << std::endl << "test2" << std::endl;
+
+	{
+		{	std::ofstream	ofs{path};	}
+		auto const	lines	= xxx::file::read_lines<char>(path);
+		EXPECT_EQ(0u, lines.size());
+	}
+
+	{
+		{	std::ofstream	ofs{path};	if (ofs)	ofs	<< "test1";	}
+		auto const	lines	= xxx::file::read_lines<char>(path);
+		EXPECT_EQ(1u, lines.size());
+		EXPECT_EQ("test1"s, lines.at(0));
+	}
+
+	{
+		{	std::ofstream	ofs{path};	if (ofs)	ofs	<< oss.str();	}
+		auto const	lines	= xxx::file::read_lines<char>(path);
+		EXPECT_EQ(2u, lines.size());
+		EXPECT_EQ("test1"s, lines.at(0));
+		EXPECT_EQ("test2"s, lines.at(1));
+	}
+
+	std::filesystem::remove(path);
 }
 
 TEST(test_config, Copy) {
