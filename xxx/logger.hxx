@@ -10,6 +10,7 @@
 #define xxx_LOGGER_HXX_
 
 #include <filesystem>
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <set>
@@ -49,24 +50,6 @@ namespace std {
 #endif	// xxx_no_logging
 
 namespace xxx {
-
-#if defined(__cpp_char8_t) && 201803 <= __cpp_char8_t
-
-inline std::ostream&
-operator<<(std::ostream& os, char8_t ch)
-{
-	if (ch < 0x80)
-	{
-		os << static_cast<char>(ch);
-	}
-	else
-	{
-		os << std::hex << std::setfill('0') << std::setw(2) << std::uppercase << static_cast<unsigned>(ch);
-	}
-	return os;
-}
-
-#endif	// __cpp_char8_t
 
 ///	@brief	logger.
 namespace log {
@@ -132,7 +115,7 @@ dump_(std::ostream& os, std::vector<T> const& head, Args... args)
 	}
 }
 
-//	Dumps vector arguments.
+//	Dumps map arguments.
 //	@param[in,out]	os		Output stream.
 //	@param[in]		head	Head of argruments.
 //	@param[in]		args	Other argument(s).
@@ -155,7 +138,7 @@ dump_(std::ostream& os, std::map<T,V> const& head, Args... args)
 		dump_(os, args...);
 	}
 }
-//	Dumps vector arguments.
+//	Dumps set arguments.
 //	@param[in,out]	os		Output stream.
 //	@param[in]		head	Head of argruments.
 //	@param[in]		args	Other argument(s).
@@ -176,7 +159,7 @@ dump_(std::ostream& os, std::set<T> const& head, Args... args)
 		dump_(os, args...);
 	}
 }
-//	Dumps vector arguments.
+//	Dumps unordered map arguments.
 //	@param[in,out]	os		Output stream.
 //	@param[in]		head	Head of argruments.
 //	@param[in]		args	Other argument(s).
@@ -199,7 +182,7 @@ dump_(std::ostream& os, std::unordered_map<T, V> const& head, Args... args)
 		dump_(os, args...);
 	}
 }
-//	Dumps vector arguments.
+//	Dumps unordered set arguments.
 //	@param[in,out]	os		Output stream.
 //	@param[in]		head	Head of argruments.
 //	@param[in]		args	Other argument(s).
@@ -220,6 +203,31 @@ dump_(std::ostream& os, std::unordered_set<T> const& head, Args... args)
 		dump_(os, args...);
 	}
 }
+
+#if defined(__cpp_char8_t) && 201803 <= __cpp_char8_t
+
+template <typename T, typename... Args>
+inline void
+dump_(std::ostream& os, char8_t ch, Args... args)
+{
+	if (ch < 0x80)
+	{
+		os << static_cast<char>(ch);
+	}
+	else
+	{
+		os << std::hex << std::setfill('0') << std::setw(2) << std::uppercase << static_cast<unsigned>(ch);
+	}
+}
+
+template <typename T, typename... Args>
+inline void
+dump_(std::ostream& os, std::u8string_view const& head, Args... args)
+{
+	std::for_each(head.cbegin(), head.cend(), [&](auto const ch){ dump_(os, ch); });
+}
+
+#endif	// __cpp_char8_t
 
 //	Dumps arguments with separation comma.
 //	@param[in,out]	os		Output stream.
