@@ -10,6 +10,8 @@
 #include <xxx/logger.hxx>
 #include <xxx/config.hxx>
 #include <xxx/files.hxx>
+#include <xxx/redux.hxx>
+#include <xxx/queue.hxx>
 
 #include <gtest/gtest.h>
 
@@ -846,4 +848,75 @@ TEST(test_logger, Another_logger) {
 	if (std::filesystem::exists(path)) {
 		std::filesystem::remove(path);
 	}
+}
+
+TEST(test_redux, Action) {
+	enum class id_t	{ Invalid, Valid };
+	using	action_t	= xxx::redux::action<id_t>;
+
+	action_t	ai{id_t::Invalid};
+	EXPECT_EQ(id_t::Invalid, ai.id());
+	action_t	av{id_t::Valid};
+	EXPECT_EQ(id_t::Valid, av.id());
+	action_t	a1{id_t::Valid, 1};
+	EXPECT_EQ(id_t::Valid, a1.id());
+	EXPECT_EQ(1, a1.option<int>());
+	action_t	a2{id_t::Valid, std::move(2)};
+	EXPECT_EQ(id_t::Valid, a2.id());
+	EXPECT_EQ(2, a2.option<int>());
+	EXPECT_EQ(2, a2.option<int>());
+	action_t	a12{id_t::Valid, std::vector({1,2})};
+	EXPECT_EQ(id_t::Valid, a12.id());
+	EXPECT_EQ(1, a12.option<std::vector<int>>().at(0));
+	EXPECT_EQ(2, a12.option<std::vector<int>>().at(1));
+}
+
+TEST(test_redux, State) {
+	enum class id_t	{ Invalid, Valid };
+	using	action_t	= xxx::redux::action<id_t>;
+	using	store_t		= xxx::redux::store<int, action_t>;
+
+	auto const	reducer	= [](int const& s, action_t const& a) -> int {
+		switch (a.id())
+		{
+		case id_t::Invalid:
+			return 0;
+		default:
+			return s;
+		}
+	};
+
+	action_t	action{id_t::Invalid};
+	store_t		store{1, reducer };
+
+	store.state([](auto const& state){
+		EXPECT_EQ(1, state);
+	});
+	store.add_listener([](int const& s, action_t const& a){
+		EXPECT_EQ(id_t::Invalid, a.id());
+		EXPECT_EQ(0, s);
+		return s;
+	});
+	store.dispatch(action);
+	store.state([](auto const& state){
+		EXPECT_EQ(0, state);
+	});
+	store.clear_listeners();
+}
+
+TEST(test_queue, Queue) {
+	xxx::queue<int>		que;
+	EXPECT_TRUE(que.empty());
+	que.enqueue(std::move(1));
+	EXPECT_FALSE(que.empty());
+	que.enqueue(2);
+	int		e;
+	que.dequeue(e);
+	EXPECT_EQ(1, e);
+	que.dequeue(e);
+	EXPECT_EQ(2, e);
+	EXPECT_FALSE(que.terminated());
+	EXPECT_TRUE(que.empty());
+	que.terminate();
+	EXPECT_TRUE(que.terminated());
 }
