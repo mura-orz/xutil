@@ -62,6 +62,8 @@ target_sources				(xxx	PUBLIC
 	xxx/logger.hxx
 	xxx/config.hxx
 	xxx/files.hxx
+	xxx/redux.hxx
+	xxx/queue.hxx
 )
 target_compile_features		(xxx	PUBLIC		cxx_std_20)
 target_compile_options		(xxx	PUBLIC		${VALIDATOR} ${OPTIMIZER} ${LANG})
