@@ -19,7 +19,7 @@
 namespace xxx::redux {
 
 ///	@brief	Action
-///	@trapm	Id	Identifier of the action type.
+///	@tparam	Id	Identifier of the action type.
 template<typename Id>
 class action {
 public:
@@ -70,14 +70,14 @@ public:
 	}
 	///	@brief	Gets a full copy of the current state.
 	///		It is a simple interface but needs deep copy of the state.
-	///	@breturn	The full copy of the current state. 
+	///	@return	The full copy of the current state. 
 	State			fullcopied_state() const {
 		std::shared_lock		lock{ mutex_ };
 		return state_;
 	}
 
 
-	///	@bbrief	Dispacthes the @p action.
+	///	@brief	Dispacthes the @p action.
 	///	 	It assumes that dispatch is always called sequentially; otherwise,
 	///	@param[in]	action		Action to dispatch.
 	void			dispatch(Action const& action) {
