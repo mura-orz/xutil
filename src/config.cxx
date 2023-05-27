@@ -11,6 +11,8 @@
 #include <regex>
 #include <string_view>
 #include <algorithm>
+#include <numeric>
+#include <stdexcept>
 
 #if __has_include(<ranges>)
 #include <ranges>
@@ -106,6 +108,43 @@ configurations_t::keys() const {
 		[](auto const& a){ return a.first; });
 	return keys;
 #endif
+}
+
+std::tuple<int, std::unordered_multimap<std::string, std::string>>
+get_options(int ac, char* av[]) {
+	std::vector<std::string_view> const		args(av+1, av+ac);
+	if (args.empty())	return { 0, {} };
+	try {
+#if __has_include(<ranges>)
+		auto	as	= args | std::views::filter([](auto const& a) { return a == "-" || !a.starts_with("-"); }) | std::views::transform([](auto const& a) {
+					return std::make_pair(std::string{}, std::string{a});
+				}) | std::views::common;
+		auto	os	= args | std::views::filter([](auto const& a){ return a != "-" && a.starts_with("-"); }) | std::views::transform([](auto const& a) {
+					std::regex const	option_re{ R"(^--?([a-zA-Z0-9]+)(?:[=:](.+))?$)" };
+					if (std::cmatch result; std::regex_match(a.data(), result, option_re)) {
+						return std::make_pair(std::string{result.str(1)}, std::string{result.size() < 2 ? "" : result.str(2)});
+					} else throw std::invalid_argument(std::string{a});
+				}) | std::views::common;
+		auto		ms		= std::vector{ std::vector<std::pair<std::string, std::string>>(as.begin(), as.end()), std::vector<std::pair<std::string, std::string>>(os.begin(), os.end()) } | std::views::join;
+		auto const	options	= std::accumulate(ms.begin(), ms.end(), std::move(std::unordered_multimap<std::string, std::string>{}), [](auto&& res, auto const& a) { res.insert(a); return std::move(res);  });
+#else
+		std::regex const									option_re{ R"(^--?([a-zA-Z0-9]+)(?:[=:](.+))?$)" };
+		std::unordered_multimap<std::string, std::string>	options;
+		for (auto const& a : args) {
+			if (a != "-" && a.starts_with('-')) {
+				if (std::cmatch result; std::regex_match(a.data(), result, option_re)) {
+					options.insert(std::make_pair(result.str(1), result.size() < 2 ? "" : result.str(2)));
+				} else throw std::invalid_argument(std::string{a});
+			} else {
+				options.insert(std::make_pair("", a));
+			}
+		}
+#endif
+		auto const		usage	= options.contains("h") || options.contains("help");
+		return { usage ? 1 : 0, options };
+	} catch (std::invalid_argument const&) {
+		return { -1, {} };
+	}
 }
 
 }	// namespace xxx::config

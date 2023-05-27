@@ -155,6 +155,124 @@ TEST(test_config, BadOptions) {
 	}
 }
 
+TEST (test_config, GetOpt) {
+	using namespace std::string_literals;
+	{
+		char* av[] = { const_cast<char*>("foo"), const_cast<char*>("arg1"), const_cast<char*>("arg2"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		auto	[lb, ub]	= opts.equal_range("");
+		auto	nb		= lb;
+		++nb;
+		EXPECT_EQ(0, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(2, opts.count(""));
+		EXPECT_NE(lb, opts.end());
+		EXPECT_NE(lb, ub);
+		EXPECT_NE(nb, ub);
+		EXPECT_TRUE((lb->second == "arg1"s && nb->second == "arg2"s) || (lb->second == "arg2"s && nb->second == "arg1"s));
+	}
+	{
+		char* av[] = { const_cast<char*>("foo"), const_cast<char*>("arg1"), const_cast<char*>("arg1"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		auto	[lb, ub]	= opts.equal_range("");
+		auto	nb		= lb;
+		++nb;
+		EXPECT_EQ(0, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(2, opts.count(""));
+		EXPECT_NE(lb, opts.end());
+		EXPECT_NE(lb, ub);
+		EXPECT_NE(nb, ub);
+		EXPECT_TRUE(lb->second == "arg1"s && nb->second == "arg1"s);
+	}
+ {
+		char* av[] = { const_cast<char*>("foo"), const_cast<char*>("-o=1"), const_cast<char*>("-o:2"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		auto	[lb, ub]	= opts.equal_range("o");
+		auto	nb		= lb;
+		++nb;
+		EXPECT_NE(lb, ub);
+		EXPECT_EQ(0, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(2, opts.count("o"));
+		EXPECT_NE(lb, opts.end());
+		EXPECT_NE(lb, ub);
+		EXPECT_NE(nb, ub);
+		EXPECT_TRUE((lb->second == "1"s && nb->second == "2"s) || (lb->second == "2"s && nb->second == "1"s));
+	}
+	{
+		char*		av[]	= { const_cast<char*>("foo"), const_cast<char*>("-"), const_cast<char*>("-opt"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		auto const [lb, ub] = opts.equal_range("");
+		EXPECT_EQ(0, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(1, opts.count(""));
+		EXPECT_EQ(1, opts.count("opt"));
+		EXPECT_EQ("-"s, lb->second);
+		EXPECT_EQ(""s, opts.equal_range("opt").first->second);
+		EXPECT_TRUE(opts.contains("opt"));
+	}
+	{
+		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("-h"), const_cast<char*>("arg1"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		auto const [lb, ub] = opts.equal_range("");
+		EXPECT_EQ(1, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(1, opts.count(""));
+		EXPECT_EQ(1, opts.count("h"));
+		EXPECT_EQ("arg1"s, lb->second);
+		EXPECT_TRUE(opts.contains("h"));
+	}
+	{
+		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("--help"), const_cast<char*>("arg1"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		auto const [lb, ub] = opts.equal_range("");
+		EXPECT_EQ(1, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(1, opts.count(""));
+		EXPECT_EQ(1, opts.count("help"));
+		EXPECT_EQ("arg1"s, lb->second);
+		EXPECT_TRUE(opts.contains("help"));
+	}
+	{
+		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("-o=1"), const_cast<char*>("-O:2"), nullptr };
+		int const	ac{ 3 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		EXPECT_EQ(0, result);
+		EXPECT_EQ(2, opts.size());
+		EXPECT_EQ(1, opts.count("o"));
+		EXPECT_EQ(1, opts.count("O"));
+		{
+			auto const [lb, ub] = opts.equal_range("o");
+			EXPECT_EQ("1"s, lb->second);
+		}
+		{
+			auto const [lb, ub] = opts.equal_range("O");
+			EXPECT_EQ("2"s, lb->second);
+		}
+	}
+	{
+		char*		av[] = { const_cast<char*>("foo"), nullptr };
+		int const	ac{ 1 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		EXPECT_EQ(0, result);
+		EXPECT_EQ(0, opts.size());
+	}
+	{
+		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("-o-1"), nullptr };
+		int const	ac{ 2 };
+		auto const [result, opts] = xxx::config::get_options(ac, av);
+		EXPECT_EQ(-1, result);
+		EXPECT_EQ(0, opts.size());
+	}
+}
+
 TEST(test_config, BadConf) {
 	using namespace std::string_literals;
 	EXPECT_THROW(xxx::config::configurations_t	config{"nothing.conf"}, std::ios::failure);

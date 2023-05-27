@@ -9,9 +9,12 @@
 #define xxx_CONFIG_HXX_
 
 #include <filesystem>
-#include <unordered_map>
 #include <unordered_set>
+#include <unordered_map>
+#include <vector>
+#include <tuple>
 #include <string>
+#include <string_view>
 #include <sstream>
 #include <stdexcept>
 
@@ -155,6 +158,19 @@ template<>	inline bool				configurations_t::get_as(std::string const& key, bool&
 	} else { return std::move(alternative); }
 }
 
+///	@brief	Gets options of application.
+///	@param[in]	ac		Argument count that also contains name of the application.
+///	@param[in]	av		Argument values. av[0] is the name.
+///	@return		The first integer is result of parsing.
+///				If the "-h" or "--help" options exists, it is a positive value;
+///				if invalid option exists, it is negative value; otherwise, it is zero.
+///				The second value is options and other arguments.
+///				The 'option' is an argument starts with the '-' character excluding single '-' character only.
+///				Index of the option is its name excluding the '-' characters.
+///				Value of the option is any characters following the '=' or ':' in the argument.
+///				Other arguments excluding the options have empty("") index of the second container.
+///				Note that the second value is empty if the first integer is nagative value.
+std::tuple<int, std::unordered_multimap<std::string, std::string>>		get_options(int ac, char* av[]);
 
 }	// namespace xxx::config
 
