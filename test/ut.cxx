@@ -12,6 +12,7 @@
 #include <xxx/files.hxx>
 #include <xxx/redux.hxx>
 #include <xxx/queue.hxx>
+#include <xxx/sig.hxx>
 
 #include <gtest/gtest.h>
 
