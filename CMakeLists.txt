@@ -47,7 +47,7 @@ set(GCLIB
 
 ##############################################################################
 
-project ("xxx")
+project (xxx)
 
 add_library					(xxx)
 target_sources				(xxx	PRIVATE
@@ -76,8 +76,9 @@ target_compile_definitions	(xxx	PUBLIC
 	$<${POSIX}:					xxx_posix>
 	$<${WIN32}:					xxx_win32>
 )
-target_include_directories	(xxx	PUBLIC		".")
+target_include_directories	(xxx	PUBLIC		.)
 target_link_libraries		(xxx	INTERFACE	${GCLIB})
 
 add_subdirectory			(test)
 add_subdirectory			(samples)
+s
