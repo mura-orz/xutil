@@ -23,32 +23,6 @@
 
 namespace {
 
-std::tuple<int,xxx::config::options_t, std::vector<std::string_view>>
-get_options(int ac, char** av) {
-	xxx::config::options_t			options;
-	std::vector<std::string_view>	arguments;	arguments.reserve(ac-1);
-
-	std::regex const	option_re{R"(^--?([A-Za-z._][A-Za-z0-9._-]*)(?:[:=](.*))?$)"};
-	for (int n=1; n < ac; ++n) {
-		std::string_view const	s{av[n]};
-		if (s == "-h" || s == "--help") {
-			return {1, {}, {}};
-		} else if (s == "-") {
-			arguments.push_back(s);
-		} else if (s.starts_with("-")) {
-			using svmatch	= std::match_results<std::string_view::const_iterator>;
-			if (svmatch result; std::regex_match(s.cbegin(), s.cend(), result, option_re)) {
-				options[result.str(1)]	= result.str(2);
-			} else {
-				return {-1, {}, {}};
-			}
-		} else {
-			arguments.push_back(s);
-		}
-	}
-	return {0, options, arguments};
-}
-
 /// @brief	Gets the usage of this program.
 /// @param[in]	result		Result of this program. Zero means success. Negative value means an error.
 /// @return		String of the usage.
@@ -83,13 +57,13 @@ main(int ac, char** av) {
 		logger.set_path("");
 		logger.set_level(xxx::log::level_t::All);
 
-		auto const[result, options, arguments]	= get_options(ac, av);
+		auto const[result, options]	= xxx::config::get_options(ac, av);
 		std::clog	<< get_usage(result) << std::endl;
 		if (result != 0) {
 			return result;
 		}
 
-		std::filesystem::path const	path{ options.contains("c") ? options.at("c") : "xxx.conf"};
+		std::filesystem::path const	path{ options.contains("c") ? options.at("c").at(0) : "xxx.conf"};
 		auto const	configurations	= std::filesystem::exists(path)
 			? xxx::config::configurations_t{path, options}
 			: xxx::config::configurations_t{options};

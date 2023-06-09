@@ -27,7 +27,7 @@ is_invalid_key(std::string_view const key) {
 }
 
 void
-configurations_t::validate_keys(std::unordered_map<std::string, std::string> const& options) {
+configurations_t::validate_keys(options_t const& options) {
 #if __has_include(<ranges>)
 	auto const	keys	= options | std::views::keys;
 	if (auto const itr = std::ranges::find_if(keys, is_invalid_key); itr != std::ranges::cend(keys)) {
@@ -53,18 +53,18 @@ configurations_t::configurations_t(std::filesystem::path const& path) : config_{
 	load_file(config_, path);
 }
 
-configurations_t::configurations_t(std::filesystem::path const& path, options_t const& options) : config_{options} {
-	validate_keys(config_);
-	decltype(config_)	config;
+configurations_t::configurations_t(std::filesystem::path const& path, options_t const& options) : config_{} {
+	decltype(config_)	config{options};
+	validate_keys(config);
 	load_file(config, path);
-	config_.merge(config);
+	std::swap(config_, config);
 }
 
-configurations_t::configurations_t(std::filesystem::path const& path, options_t&& options) : config_{std::move(options)} {
-	validate_keys(config_);
-	decltype(config_)	config;
+configurations_t::configurations_t(std::filesystem::path const& path, options_t&& options) : config_{} {
+	decltype(config_)	config{std::move(options)};
+	validate_keys(config);
 	load_file(config, path);
-	config_.merge(config);
+	std::swap(config_, config);
 }
 
 void
@@ -84,11 +84,11 @@ configurations_t::load_file(options_t& config, std::filesystem::path const& path
 
 		std::smatch		result;
 		if ( ! std::regex_match(line.cbegin(), line.cend(), result, re)) {
-			throw std::runtime_error(line);		// Symtax error is invalid.
+			throw std::runtime_error(line);		// Syntax error is invalid.
 		}
 		auto const	key		= result.str(1);
 		auto const	value	= result.str(2);
-		config[key]	= value;	// It overrides previous value if the key already has existed.
+		config[key].push_back(value);	// It overrides previous value if the key already has existed.
 	}
 }
 
@@ -110,33 +110,34 @@ configurations_t::keys() const {
 #endif
 }
 
-std::tuple<int, std::unordered_multimap<std::string, std::string>>
+std::tuple<int, options_t>
 get_options(int ac, char* av[]) {
 	std::vector<std::string_view> const		args(av+1, av+ac);
 	if (args.empty())	return { 0, {} };
 	try {
 #if __has_include(<ranges>)
-		auto	as	= args | std::views::filter([](auto const& a) { return a == "-" || !a.starts_with("-"); }) | std::views::transform([](auto const& a) {
-					return std::make_pair(std::string{}, std::string{a});
-				}) | std::views::common;
-		auto	os	= args | std::views::filter([](auto const& a){ return a != "-" && a.starts_with("-"); }) | std::views::transform([](auto const& a) {
+		auto const	options	= std::accumulate(args.begin(), args.end(), std::move(options_t{}),
+			[](auto&& res, auto const& a) {
+				if (a == "-" || !a.starts_with("-")) {
+					res[""].push_back(std::string{a});
+				} else {
 					std::regex const	option_re{ R"(^--?([a-zA-Z0-9]+)(?:[=:](.+))?$)" };
 					if (std::cmatch result; std::regex_match(a.data(), result, option_re)) {
-						return std::make_pair(std::string{result.str(1)}, std::string{result.size() < 2 ? "" : result.str(2)});
+						res[result.str(1)].push_back(std::string{result.size() < 2 ? "" : result.str(2)});
 					} else throw std::invalid_argument(std::string{a});
-				}) | std::views::common;
-		auto		ms		= std::vector{ std::vector<std::pair<std::string, std::string>>(as.begin(), as.end()), std::vector<std::pair<std::string, std::string>>(os.begin(), os.end()) } | std::views::join;
-		auto const	options	= std::accumulate(ms.begin(), ms.end(), std::move(std::unordered_multimap<std::string, std::string>{}), [](auto&& res, auto const& a) { res.insert(a); return std::move(res);  });
+				}
+				return std::move(res);
+			});
 #else
-		std::regex const									option_re{ R"(^--?([a-zA-Z0-9]+)(?:[=:](.+))?$)" };
-		std::unordered_multimap<std::string, std::string>	options;
+		std::regex const	option_re{ R"(^--?([a-zA-Z0-9]+)(?:[=:](.+))?$)" };
+		options_t			options;
 		for (auto const& a : args) {
 			if (a != "-" && a.starts_with('-')) {
 				if (std::cmatch result; std::regex_match(a.data(), result, option_re)) {
-					options.insert(std::make_pair(result.str(1), result.size() < 2 ? "" : result.str(2)));
+					options[result.str(1)].push_back(result.size() < 2 ? "" : result.str(2));
 				} else throw std::invalid_argument(std::string{a});
 			} else {
-				options.insert(std::make_pair("", a));
+				options[""].push_back(std::string{a});
 			}
 		}
 #endif

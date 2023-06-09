@@ -68,10 +68,10 @@ TEST(test_config, Empty) {
 TEST(test_config, CopiedOptions) {
 	using namespace std::string_literals;
 
-	std::unordered_map<std::string,std::string>	options{
-		{"foo", "bar"}, {"one", "1"},
-		{"t", "true"}, {"f", "false"},
-		{"none", ""}, {"num-alpha", "1a"}
+	xxx::config::options_t	options{
+		{"foo", {"bar"}}, {"one", {"1"}},
+		{"t", {"true"}}, {"f", {"false"}},
+		{"none", {""}}, {"num-alpha", {"1a"}}
 	};
 	xxx::config::configurations_t	config{options};
 	EXPECT_FALSE(config.contains("key"));
@@ -80,11 +80,11 @@ TEST(test_config, CopiedOptions) {
 	EXPECT_TRUE(config.contains("t"));
 	EXPECT_TRUE(config.contains("f"));
 	EXPECT_TRUE(config.contains("none"));
-	EXPECT_EQ("bar"s, config.get("foo"));
-	EXPECT_EQ("1"s, config.get("one"));
-	EXPECT_EQ("true"s, config.get("t"));
-	EXPECT_EQ("false"s, config.get("f"));
-	EXPECT_EQ(""s, config.get("none"));
+	EXPECT_EQ("bar"s, config.get("foo").at(0));
+	EXPECT_EQ("1"s, config.get("one").at(0));
+	EXPECT_EQ("true"s, config.get("t").at(0));
+	EXPECT_EQ("false"s, config.get("f").at(0));
+	EXPECT_EQ(""s, config.get("none").at(0));
 	EXPECT_THROW(config.get_as<int>("num-alpha"), std::bad_cast);
 	EXPECT_THROW(config.get("key"), std::out_of_range);
 	EXPECT_EQ("bar"s, config.get_as<std::string>("foo"));
@@ -116,42 +116,42 @@ TEST(test_config, CopiedOptions) {
 }
 
 TEST(test_config, MovedOptions) {
-	xxx::config::configurations_t	config{std::move(std::unordered_map<std::string,std::string>{{"foo", "bar"}})};
+	xxx::config::configurations_t	config{std::move(xxx::config::options_t{ {"foo", {"bar"}} })};
 	EXPECT_TRUE(config.contains("foo"));
 }
 
 TEST(test_config, GoodOptions) {
-	std::unordered_map<std::string,std::string>	options{{"Aa1.-_", "bar"}};
+	xxx::config::options_t	options{ {"Aa1.-_", {"bar"}} };
 	EXPECT_NO_THROW(xxx::config::configurations_t	config{options});
 }
 
 TEST(test_config, BadOptions) {
 	{
-		std::unordered_map<std::string,std::string>	options{{" foo ", "bar"}};
+		xxx::config::options_t	options{{" foo ", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{
-		std::unordered_map<std::string,std::string>	options{{"foo bar", "bar"}};
+		xxx::config::options_t	options{{"foo bar", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{
-		std::unordered_map<std::string,std::string>	options{{"", "bar"}};
+		xxx::config::options_t	options{{"", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{
-		std::unordered_map<std::string,std::string>	options{{"foo$bar", "bar"}};
+		xxx::config::options_t	options{{"foo$bar", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{
-		std::unordered_map<std::string,std::string>	options{{"1", "bar"}};
+		xxx::config::options_t	options{{"1", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{
-		std::unordered_map<std::string,std::string>	options{{"-", "bar"}};
+		xxx::config::options_t	options{{"-", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 	{
-		std::unordered_map<std::string,std::string>	options{{"#foo$bar", "bar"}};
+		xxx::config::options_t	options{{"#foo$bar", { "bar" }}};
 		EXPECT_THROW(xxx::config::configurations_t	config{std::move(options)}, std::invalid_argument);
 	}
 }
@@ -162,84 +162,66 @@ TEST (test_config, GetOpt) {
 		char* av[] = { const_cast<char*>("foo"), const_cast<char*>("arg1"), const_cast<char*>("arg2"), nullptr };
 		int const	ac{ 3 };
 		auto const [result, opts] = xxx::config::get_options(ac, av);
-		auto	[lb, ub]	= opts.equal_range("");
-		auto	nb		= lb;
-		++nb;
 		EXPECT_EQ(0, result);
-		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(2, opts.count(""));
-		EXPECT_NE(lb, opts.end());
-		EXPECT_NE(lb, ub);
-		EXPECT_NE(nb, ub);
-		EXPECT_TRUE((lb->second == "arg1"s && nb->second == "arg2"s) || (lb->second == "arg2"s && nb->second == "arg1"s));
+		EXPECT_EQ(1, opts.size());
+		EXPECT_EQ(2, opts.at("").size());
+		EXPECT_EQ("arg1"s, opts.at("").at(0));
+		EXPECT_EQ("arg2"s, opts.at("").at(1));
 	}
 	{
 		char* av[] = { const_cast<char*>("foo"), const_cast<char*>("arg1"), const_cast<char*>("arg1"), nullptr };
 		int const	ac{ 3 };
 		auto const [result, opts] = xxx::config::get_options(ac, av);
-		auto	[lb, ub]	= opts.equal_range("");
-		auto	nb		= lb;
-		++nb;
 		EXPECT_EQ(0, result);
-		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(2, opts.count(""));
-		EXPECT_NE(lb, opts.end());
-		EXPECT_NE(lb, ub);
-		EXPECT_NE(nb, ub);
-		EXPECT_TRUE(lb->second == "arg1"s && nb->second == "arg1"s);
+		EXPECT_EQ(1, opts.size());
+		EXPECT_EQ(2, opts.at("").size());
+		EXPECT_EQ("arg1"s, opts.at("").at(0));
+		EXPECT_EQ("arg1"s, opts.at("").at(1));
 	}
- {
+	{
 		char* av[] = { const_cast<char*>("foo"), const_cast<char*>("-o=1"), const_cast<char*>("-o:2"), nullptr };
 		int const	ac{ 3 };
 		auto const [result, opts] = xxx::config::get_options(ac, av);
-		auto	[lb, ub]	= opts.equal_range("o");
-		auto	nb		= lb;
-		++nb;
-		EXPECT_NE(lb, ub);
 		EXPECT_EQ(0, result);
-		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(2, opts.count("o"));
-		EXPECT_NE(lb, opts.end());
-		EXPECT_NE(lb, ub);
-		EXPECT_NE(nb, ub);
-		EXPECT_TRUE((lb->second == "1"s && nb->second == "2"s) || (lb->second == "2"s && nb->second == "1"s));
+		EXPECT_EQ(1, opts.size());
+		EXPECT_EQ(2, opts.at("o").size());
+		EXPECT_EQ("1"s, opts.at("o").at(0));
+		EXPECT_EQ("2"s, opts.at("o").at(1));
 	}
 	{
 		char*		av[]	= { const_cast<char*>("foo"), const_cast<char*>("-"), const_cast<char*>("-opt"), nullptr };
 		int const	ac{ 3 };
 		auto const [result, opts] = xxx::config::get_options(ac, av);
-		auto const [lb, ub] = opts.equal_range("");
 		EXPECT_EQ(0, result);
 		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(1, opts.count(""));
-		EXPECT_EQ(1, opts.count("opt"));
-		EXPECT_EQ("-"s, lb->second);
-		EXPECT_EQ(""s, opts.equal_range("opt").first->second);
+		EXPECT_EQ(1, opts.at("").size());
+		EXPECT_EQ(1, opts.at("opt").size());
+		EXPECT_EQ("-"s, opts.at("").at(0));
+		EXPECT_EQ(""s, opts.at("opt").at(0));
 		EXPECT_TRUE(opts.contains("opt"));
 	}
 	{
 		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("-h"), const_cast<char*>("arg1"), nullptr };
 		int const	ac{ 3 };
 		auto const [result, opts] = xxx::config::get_options(ac, av);
-		auto const [lb, ub] = opts.equal_range("");
 		EXPECT_EQ(1, result);
 		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(1, opts.count(""));
-		EXPECT_EQ(1, opts.count("h"));
-		EXPECT_EQ("arg1"s, lb->second);
+		EXPECT_EQ(1, opts.at("").size());
+		EXPECT_EQ(1, opts.at("h").size());
+		EXPECT_EQ("arg1"s, opts.at("").at(0));
 		EXPECT_TRUE(opts.contains("h"));
 	}
 	{
 		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("--help"), const_cast<char*>("arg1"), nullptr };
 		int const	ac{ 3 };
 		auto const [result, opts] = xxx::config::get_options(ac, av);
-		auto const [lb, ub] = opts.equal_range("");
 		EXPECT_EQ(1, result);
 		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(1, opts.count(""));
-		EXPECT_EQ(1, opts.count("help"));
-		EXPECT_EQ("arg1"s, lb->second);
+		EXPECT_EQ(1, opts.at("").size());
+		EXPECT_EQ(1, opts.at("help").size());
+		EXPECT_EQ("arg1"s, opts.at("").at(0));
 		EXPECT_TRUE(opts.contains("help"));
+		EXPECT_EQ(""s, opts.at("help").at(0));
 	}
 	{
 		char*		av[] = { const_cast<char*>("foo"), const_cast<char*>("-o=1"), const_cast<char*>("-O:2"), nullptr };
@@ -247,16 +229,10 @@ TEST (test_config, GetOpt) {
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
 		EXPECT_EQ(2, opts.size());
-		EXPECT_EQ(1, opts.count("o"));
-		EXPECT_EQ(1, opts.count("O"));
-		{
-			auto const [lb, ub] = opts.equal_range("o");
-			EXPECT_EQ("1"s, lb->second);
-		}
-		{
-			auto const [lb, ub] = opts.equal_range("O");
-			EXPECT_EQ("2"s, lb->second);
-		}
+		EXPECT_EQ(1, opts.at("o").size());
+		EXPECT_EQ(1, opts.at("O").size());
+		EXPECT_EQ("1"s, opts.at("o").at(0));
+		EXPECT_EQ("2"s, opts.at("O").at(0));
 	}
 	{
 		char*		av[] = { const_cast<char*>("foo"), nullptr };
@@ -311,12 +287,13 @@ TEST(test_config, LoadOptions) {
 	EXPECT_FALSE(config.contains(""));
 	EXPECT_FALSE(config.contains("#aaa"));
 	EXPECT_FALSE(config.contains("aaa"));
-	EXPECT_EQ("b"s, config.get("a"));
-	EXPECT_EQ("d"s, config.get("c"));
-	EXPECT_EQ("f "s, config.get("e"));
-	EXPECT_EQ("h"s, config.get("g"));
-	EXPECT_EQ(""s, config.get("i"));
-	EXPECT_EQ(""s, config.get("j"));
+	EXPECT_EQ("b"s, config.get("a").at(0));
+	EXPECT_EQ("d"s, config.get("c").at(0));
+	EXPECT_EQ("f "s, config.get("e").at(0));
+	EXPECT_EQ("h"s, config.get("g").at(0));
+	EXPECT_EQ("x"s, config.get("i").at(0));
+	EXPECT_EQ(""s, config.get("i").at(1));
+	EXPECT_EQ(""s, config.get("j").at(0));
 
 	std::filesystem::remove("test.conf");
 }
@@ -372,10 +349,10 @@ TEST(test_files, read_line) {
 
 TEST(test_config, Copy) {
 	using namespace std::string_literals;
-	xxx::config::configurations_t	config{{std::make_pair("a"s,"b"s)}};
-	EXPECT_EQ("b"s, config.get("a"));
+	xxx::config::configurations_t	config{xxx::config::options_t{{"a", { "b" }}}};
+	EXPECT_EQ("b"s, config.get("a").at(0));
 	auto const	copied	= config;
-	EXPECT_EQ("b"s, copied.get("a"));
+	EXPECT_EQ("b"s, copied.get("a").at(0));
 }
 
 TEST(test_config, OptionsAndFile) {
@@ -385,17 +362,17 @@ TEST(test_config, OptionsAndFile) {
 		ofs	<<	"A=B" << std::endl;
 		ofs	<<	"a=b" << std::endl;
 	}
-	std::unordered_map<std::string,std::string>	options{{"a"s, "c"s}, {"x"s, "z"s}};
+	xxx::config::options_t	options{{"a", { "c" }}, { "x", {"z"} }};
 
 	xxx::config::configurations_t	config1{"test.conf", options};
-	EXPECT_EQ("B", config1.get("A"));
-	EXPECT_EQ("c", config1.get("a"));
-	EXPECT_EQ("z", config1.get("x"));
+	EXPECT_EQ("B", config1.get("A").at(0));
+	EXPECT_EQ("c", config1.get("a").at(0));
+	EXPECT_EQ("z", config1.get("x").at(0));
 
 	xxx::config::configurations_t	config2{"test.conf", std::move(options)};
-	EXPECT_EQ("B", config2.get("A"));
-	EXPECT_EQ("c", config2.get("a"));
-	EXPECT_EQ("z", config2.get("x"));
+	EXPECT_EQ("B", config2.get("A").at(0));
+	EXPECT_EQ("c", config2.get("a").at(0));
+	EXPECT_EQ("z", config2.get("x").at(0));
 
 	std::filesystem::remove("test.conf");
 }
