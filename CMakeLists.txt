@@ -81,4 +81,3 @@ target_link_libraries		(xxx	INTERFACE	${GCLIB})
 
 add_subdirectory			(test)
 add_subdirectory			(samples)
-s
