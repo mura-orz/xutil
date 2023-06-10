@@ -21,7 +21,7 @@
 namespace xxx::config {
 
 /// @brief	Options.
-using options_t	= std::unordered_map<std::string, std::string>;
+using options_t	= std::unordered_map<std::string, std::vector<std::string>>;
 
 /// @brief 	Configurations.
 ///		This implementation allows only one value for a key.
@@ -39,19 +39,20 @@ public:
 	/// @param[in]	key				A key to get.
 	/// @return		The value that related with the @p key.
 	///	@throw		It throws an exception if the @o key does not exist.
-	std::string const&		get(std::string const& key) const { return config_.at(key);		}
+	auto const&		get(std::string const& key) const { return config_.at(key);		}
 
 	/// @brief 	Gets a value as specific type.
 	///	@tparam		T				Type of result.
 	///	@param[in]	key				A key to get
+	///	@param[in]	index			Index of values
 	/// @return		The value that related with the @p key.
 	///	@throw		It throws an exception if the @o key does not exist.
 	///	@throw		It throws an exception if the value cannot be converted to the @p T type.
-	template<typename T>	T		get_as(std::string const& key) const	{
+	template<typename T>	T		get_as(std::string const& key, std::size_t index=0u) const	{
 		if (auto const itr = config_.find(key); itr != config_.cend()) {
 			T	t;
-			std::istringstream	iss{itr->second};	iss	>> t;
-			if (!itr->second.empty() && iss.eof()) {
+			std::istringstream	iss{itr->second.at(index)};	iss	>> t;
+			if ( ! itr->second.at(index).empty() && iss.eof()) {
 				return t;
 			} else { throw std::bad_cast();	}
 		} else { throw std::out_of_range(key); }
@@ -59,27 +60,29 @@ public:
 	/// @brief 	Gets a value as specific type.
 	///	@tparam		T				Type of result.
 	///	@param[in]	key				A key to get
-	///	@param[in]	alternative		A key to get
+	///	@param[in]	alternative		Default value that is used if the @p key does not exist
+	///	@param[in]	index			Index of values
 	/// @return		The value that related with the @p key.
-	///				This method returns the @p alternative value if the @p key does not exist or its value cannnot be converted to the @p T type.
-	template<typename T>	T		get_as(std::string const& key, T const& alternative) const {
-		if (auto const itr = config_.find(key); itr != config_.cend()) {
+	///				This method returns the @p alternative value if the @p key does not exist or its value cannot be converted to the @p T type.
+	template<typename T>	T		get_as(std::string const& key, T const& alternative, std::size_t index=0u) const {
+		if (auto const itr = config_.find(key); itr != config_.cend() && index < itr->second.size() && ! itr->second.at(index).empty()) {
 			T	t	= alternative;
-			std::istringstream	iss{itr->second};	iss	>> t;
-			return !itr->second.empty() && iss.eof() ? t : alternative;
+			std::istringstream	iss{itr->second.at(index)};	iss	>> t;
+			return iss.eof() ? t : alternative;
 		} else { return alternative; }
 	}
 	/// @brief 	Gets a value as specific type.
 	///	@tparam		T				Type of result.
 	///	@param[in]	key				A key to get
-	///	@param[in]	alternative		A key to get
+	///	@param[in]	alternative		Default value that is used if the @p key does not exist
+	///	@param[in]	index			Index of values
 	/// @return		The value that related with the @p key.
 	///				It returns the @p alternative value if the @p key does not exist.
-	template<typename T>	T		get_as(std::string const& key, T&& alternative) const {
-		if (auto const itr = config_.find(key); itr != config_.cend()) {
+	template<typename T>	T		get_as(std::string const& key, T&& alternative, std::size_t index=0u) const {
+		if (auto const itr = config_.find(key); itr != config_.cend() && index < itr->second.size() && ! itr->second.at(index).empty()) {
 			T	t	= alternative;
-			std::istringstream	iss{itr->second};	iss	>> t;
-			return !itr->second.empty() && iss.eof() ? t : alternative;
+			std::istringstream	iss{itr->second.at(index)};	iss	>> t;
+			return iss.eof() ? t : alternative;
 		} else { return std::move(alternative); }
 	}
 
@@ -93,7 +96,7 @@ public:
 	///			Whitespaces before and after the key are ignored.
 	///		- Value: Zero or more any characters that includes the '#' and whitespaces,
 	///		 	excepted whitespaces following the = separator.
-	///			Hense, if there are only whitespaces on right side of the = separator,
+	///			Hence, if there are only whitespaces on right side of the = separator,
 	///			it means a value is empty.
 	/// @param[in]	path		The path of a configuration file.
 	///	@throw	It throws an exception if failed to load or syntax error exists in the file.
@@ -128,33 +131,33 @@ private:
 	options_t	config_;
 };
 
-template<>	inline std::string		configurations_t::get_as(std::string const& key) const {
-	return config_.at(key);
+template<>	inline std::string		configurations_t::get_as(std::string const& key, std::size_t index) const {
+	return config_.at(key).at(index);
 }
-template<>	inline std::string		configurations_t::get_as(std::string const& key, std::string const& alternative) const {
+template<>	inline std::string		configurations_t::get_as(std::string const& key, std::string const& alternative, std::size_t index) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return itr->second;
+		return itr->second.at(index);
 	} else { return alternative; }
 }
-template<>	inline std::string		configurations_t::get_as(std::string const& key, std::string&& alternative) const {
+template<>	inline std::string		configurations_t::get_as(std::string const& key, std::string&& alternative, std::size_t index) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return itr->second;
+		return itr->second.at(index);
 	} else { return std::move(alternative); }
 }
 
-template<>	inline bool				configurations_t::get_as(std::string const& key) const {
+template<>	inline bool				configurations_t::get_as(std::string const& key, std::size_t index) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return !itr->second.empty() && itr->second != "0" && itr->second != "false" && itr->second != "nullptr";
+		return ! itr->second.at(index).empty() && itr->second.at(index) != "0" && itr->second.at(index) != "false";
 	} else { throw std::out_of_range(key); }
 }
-template<>	inline bool				configurations_t::get_as(std::string const& key, bool const& alternative) const {
+template<>	inline bool				configurations_t::get_as(std::string const& key, bool const& alternative, std::size_t index) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return !itr->second.empty() && itr->second != "0" && itr->second != "false" && itr->second != "nullptr";
+		return ! itr->second.at(index).empty() && itr->second.at(index) != "0" && itr->second.at(index) != "false";
 	} else { return alternative; }
 }
-template<>	inline bool				configurations_t::get_as(std::string const& key, bool&& alternative) const {
+template<>	inline bool				configurations_t::get_as(std::string const& key, bool&& alternative, std::size_t index) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return !itr->second.empty() && itr->second != "0" && itr->second != "false" && itr->second != "nullptr";
+		return !itr->second.at(index).empty() && itr->second.at(index) != "0" && itr->second.at(index) != "false";
 	} else { return std::move(alternative); }
 }
 
@@ -169,8 +172,8 @@ template<>	inline bool				configurations_t::get_as(std::string const& key, bool&
 ///				Index of the option is its name excluding the '-' characters.
 ///				Value of the option is any characters following the '=' or ':' in the argument.
 ///				Other arguments excluding the options have empty("") index of the second container.
-///				Note that the second value is empty if the first integer is nagative value.
-std::tuple<int, std::unordered_multimap<std::string, std::string>>		get_options(int ac, char* av[]);
+///				Note that the second value is empty if the first integer is negative value.
+std::tuple<int, options_t>		get_options(int ac, char* av[]);
 
 }	// namespace xxx::config
 
