@@ -813,7 +813,7 @@ TEST(test_logger, Logger_level) {
 TEST(test_logger, Concatenate) {
 	using namespace std::string_literals;
 	std::filesystem::path const		path{"test.log"};
-	EXPECT_EQ("arg2"s, xxx::log::concatenate("arg", 2));
+	EXPECT_EQ("arg2"s, xxx::log::cat("arg", 2));
 }
 TEST(test_logger, Enclose) {
 	using namespace std::string_literals;
