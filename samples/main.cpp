@@ -72,8 +72,8 @@ main(int ac, char** av) {
 
 		// TODO:
 
-		logger.info(xxx::log::concatenate("path:", path.string(), "(exists:", std::filesystem::exists(path) ?"true":"false", ")"));
-		logger.info(xxx::log::concatenate("xxx v", xxx::get_major_version(xxx::get_version()),
+		logger.info(xxx::log::cat("path:", path.string(), "(exists:", std::filesystem::exists(path) ?"true":"false", ")"));
+		logger.info(xxx::log::cat("xxx v", xxx::get_major_version(xxx::get_version()),
 					".", xxx::get_minor_version(xxx::get_version()),
 					".", xxx::get_revision(xxx::get_version()),
 					".", xxx::get_extra_version(xxx::get_version())));
