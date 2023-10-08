@@ -7,43 +7,52 @@
 
 #include <xxx/xxx.hxx>
 
-#include <locale>
 #include <iostream>
+#include <locale>
 #include <stdexcept>
 
 //	@name	xxx
 namespace xxx {
 
 std::uint32_t
-get_version() noexcept
-{
+get_version() noexcept {
 	return xxx_version;
 }
 
-void
-initialize_cpp(char const* locale)
-{
+void initialize_cpp(char const* locale) {
 	std::ios::sync_with_stdio(false);
 
 	if (locale != nullptr) {
 		try {
-			auto const	loc		= std::locale(locale);
+			auto const loc = std::locale(locale);
 
 			std::locale::global(loc);
-			std::cin.imbue(loc);	std::cout.imbue(loc);	std::clog.imbue(loc);	std::cerr.imbue(loc);
-			std::wcin.imbue(loc);	std::wcout.imbue(loc);	std::wclog.imbue(loc);	std::wcerr.imbue(loc);
+			std::cin.imbue(loc);
+			std::cout.imbue(loc);
+			std::clog.imbue(loc);
+			std::cerr.imbue(loc);
+			std::wcin.imbue(loc);
+			std::wcout.imbue(loc);
+			std::wclog.imbue(loc);
+			std::wcerr.imbue(loc);
 		} catch (...) {
 			// Try the C locale, which is available typically.
-			auto const	loc		= std::locale::classic();
+			auto const loc = std::locale::classic();
 
 			std::locale::global(loc);
-			std::cin.imbue(loc);	std::cout.imbue(loc);	std::clog.imbue(loc);	std::cerr.imbue(loc);
-			std::wcin.imbue(loc);	std::wcout.imbue(loc);	std::wclog.imbue(loc);	std::wcerr.imbue(loc);
+			std::cin.imbue(loc);
+			std::cout.imbue(loc);
+			std::clog.imbue(loc);
+			std::cerr.imbue(loc);
+			std::wcin.imbue(loc);
+			std::wcout.imbue(loc);
+			std::wclog.imbue(loc);
+			std::wcerr.imbue(loc);
 		}
 	}
 }
 
-}	// namespace xxx
+}	 // namespace xxx
 
 // ---------------------------------------------------------------------------
 // Macro definitions for document
@@ -74,20 +83,20 @@ initialize_cpp(char const* locale)
 ///		If this macro is defined before compiling logger.cxx,
 ///		this logger uses standard C++ features only;
 ///		otherrise, the logger uses platform-depended extensions.
-#define	xxx_standard_cpp_only
+#define xxx_standard_cpp_only
 
 ///	@brief	Whether to log or not
 ///	@details
 ///		If this macro is defined before including logger.hxx, this logger is ignored;
 ///		otherwise, the logger is available.
-#define	xxx_no_logging
+#define xxx_no_logging
 
 ///	@brief	Whether to use ANSI escape sequence or not
 ///	@details
 ///		If this macro is defined before compiling logger.cxx,
 ///		this logger does not use ANSI escape sequences to color characters on console;
 ///		otherwise, the logger uses colored output on console.
-#define	xxx_no_ansi_escape_sequence
+#define xxx_no_ansi_escape_sequence
 
 ///	@brief	Whether multibyte srtring is UTF-8 or not
 ///	@details
