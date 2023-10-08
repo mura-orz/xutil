@@ -6,33 +6,18 @@
 #ifndef xxx_SIG_HPP_
 #define xxx_SIG_HPP_
 
-#include <atomic>
-#include <csignal>
+#include <chrono>
 
-namespace xxx {
+namespace xxx::sig {
 
-///	@brief	Signal handler.
-class signal_handler_t {
-private:
-	static std::sig_atomic_t volatile		interrupted_s;
+/// @brief	Disable signal handlers in current thread.
+void disable_signal_handlers_in_current_thread() noexcept;
 
-	///	@brief	Signal handler.
-	///	@param[in]	signal		Occurred signal.
-	static void		handle_signal(int signal)noexcept;
-public:
-	///	@brief	Is signal interrupted.
-	///	@return	It returns true if interrupted; otherwise, it returns false.
-	bool			interrupted()const volatile noexcept	{	return interrupted_s != false;	}
-	/// @brief  Clears interruption.
-	void			clear() noexcept { interrupted_s = false; }
-	///	@brief	Constructor.
-	///		Sets SIGINT and SIGTERM handlers to interrupt it.
-	signal_handler_t()noexcept;
-	///	@brief	Destructor.
-	///		Resets SIGINT and SIGTERM handlers.
-	~signal_handler_t()noexcept;
-};
+///	@brief 	Wait for one of the following signals: Interrupt, Terminate, Hangup.
+///	@param[in]	timeout		The timeout.
+///	@return		It returns @true if the signal occurred; otherwise, it returns false.
+bool wait_for_signals(std::chrono::milliseconds const& timeout);
 
-}	// namespace xxx
+}	 // namespace xxx::sig
 
-#endif	//xxx_SIG_HPP_
+#endif	  // xxx_SIG_HPP_
