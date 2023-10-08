@@ -277,7 +277,7 @@ enclose([[maybe_unused]] Args... args)
 ///	@return		string concatenated by parenthesis.
 template<typename... Args>
 inline std::string
-concatenate([[maybe_unused]] Args... args)
+cat([[maybe_unused]] Args... args)
 {
 #if !defined(xxx_no_logging)
 	std::ostringstream	oss;
@@ -526,7 +526,7 @@ public:
 	void
 	trace(Args... args)
 	{
-		logger_.log(level_, pos_, "--- ", concatenate(args...));
+		logger_.log(level_, pos_, "--- ", cat(args...));
 	}
 	///	@brief	Sets result of the method.
 	///	@param[in]		result		Result of the method.
