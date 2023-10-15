@@ -43,7 +43,7 @@ namespace log {
 #if ! defined(xxx_no_logging)
 
 namespace {
-std::regex const function_name_re{R"(^.* ((?:`?[A-Za-z_][-A-Za-z_0-9<>']*::)*~?[A-Za-z_][A-Za-z_0-9<>]*) ?\(.*$)"};
+std::regex const function_name_re{R"(^.* ((?:`?[A-Za-z_{][-A-Za-z_0-9<>'}]*::)*~?[A-Za-z_][A-Za-z_0-9<>]*) ?\(.*$)"};
 }
 
 logger_t::logger_t(level_t level, std::filesystem::path const& path, std::string_view const logger, bool console, bool daily) :
