@@ -40,9 +40,6 @@ void disable_signal_handlers_in_current_thread() {
 #ifndef _WIN32
 	::sigset_t ss{};
 	::sigemptyset(&ss);
-	::sigaddset(&ss, SIGINT);
-	::sigaddset(&ss, SIGTERM);
-	::sigaddset(&ss, SIGHUP);
 	if (::pthread_sigmask(SIG_BLOCK, &ss, nullptr) != 0) {
 		std::error_code const ec{errno, std::system_category()};
 		throw std::system_error{ec, __func__};
