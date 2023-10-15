@@ -44,17 +44,16 @@ public:
 	/// @brief 	Gets a value as specific type.
 	///	@tparam		T				Type of result.
 	///	@param[in]	key				A key to get
-	///	@param[in]	index			Index of values
 	/// @return		The value that related with the @p key.
 	///	@throw		It throws an exception if the @o key does not exist.
 	///	@throw		It throws an exception if the value cannot be converted to the @p T type.
 	template<typename T>
-	T get_as(std::string const& key, std::size_t index = 0u) const {
+	T get_as(std::string const& key) const {
 		if (auto const itr = config_.find(key); itr != config_.cend()) {
 			T				   t;
-			std::istringstream iss{itr->second.at(index)};
+			std::istringstream iss{itr->second.at(0)};
 			iss >> t;
-			if (! itr->second.at(index).empty() && iss.eof()) {
+			if (! itr->second.at(0).empty() && iss.eof()) {
 				return t;
 			} else {
 				throw std::bad_cast();
@@ -67,14 +66,13 @@ public:
 	///	@tparam		T				Type of result.
 	///	@param[in]	key				A key to get
 	///	@param[in]	alternative		Default value that is used if the @p key does not exist
-	///	@param[in]	index			Index of values
 	/// @return		The value that related with the @p key.
 	///				This method returns the @p alternative value if the @p key does not exist or its value cannot be converted to the @p T type.
 	template<typename T>
-	T get_as(std::string const& key, T const& alternative, std::size_t index = 0u) const {
-		if (auto const itr = config_.find(key); itr != config_.cend() && index < itr->second.size() && ! itr->second.at(index).empty()) {
+	T get_as(std::string const& key, T const& alternative) const {
+		if (auto const itr = config_.find(key); itr != config_.cend() && ! itr->second.empty() && ! itr->second.at(0).empty()) {
 			T				   t = alternative;
-			std::istringstream iss{itr->second.at(index)};
+			std::istringstream iss{itr->second.at(0)};
 			iss >> t;
 			return iss.eof() ? t : alternative;
 		} else {
@@ -85,14 +83,13 @@ public:
 	///	@tparam		T				Type of result.
 	///	@param[in]	key				A key to get
 	///	@param[in]	alternative		Default value that is used if the @p key does not exist
-	///	@param[in]	index			Index of values
 	/// @return		The value that related with the @p key.
 	///				It returns the @p alternative value if the @p key does not exist.
 	template<typename T>
-	T get_as(std::string const& key, T&& alternative, std::size_t index = 0u) const {
-		if (auto const itr = config_.find(key); itr != config_.cend() && index < itr->second.size() && ! itr->second.at(index).empty()) {
+	T get_as(std::string const& key, T&& alternative) const {
+		if (auto const itr = config_.find(key); itr != config_.cend() && ! itr->second.empty() && ! itr->second.at(0).empty()) {
 			T				   t = alternative;
-			std::istringstream iss{itr->second.at(index)};
+			std::istringstream iss{itr->second.at(0)};
 			iss >> t;
 			return iss.eof() ? t : alternative;
 		} else {
@@ -149,46 +146,46 @@ private:
 };
 
 template<>
-inline std::string configurations_t::get_as(std::string const& key, std::size_t index) const {
-	return config_.at(key).at(index);
+inline std::string configurations_t::get_as(std::string const& key) const {
+	return config_.at(key).at(0);
 }
 template<>
-inline std::string configurations_t::get_as(std::string const& key, std::string const& alternative, std::size_t index) const {
+inline std::string configurations_t::get_as(std::string const& key, std::string const& alternative) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return itr->second.at(index);
+		return itr->second.at(0);
 	} else {
 		return alternative;
 	}
 }
 template<>
-inline std::string configurations_t::get_as(std::string const& key, std::string&& alternative, std::size_t index) const {
+inline std::string configurations_t::get_as(std::string const& key, std::string&& alternative) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return itr->second.at(index);
+		return itr->second.at(0);
 	} else {
 		return std::move(alternative);
 	}
 }
 
 template<>
-inline bool configurations_t::get_as(std::string const& key, std::size_t index) const {
+inline bool configurations_t::get_as(std::string const& key) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return ! itr->second.at(index).empty() && itr->second.at(index) != "0" && itr->second.at(index) != "false";
+		return ! itr->second.empty() && itr->second.at(0) != "0" && itr->second.at(0) != "false";
 	} else {
 		throw std::out_of_range(key);
 	}
 }
 template<>
-inline bool configurations_t::get_as(std::string const& key, bool const& alternative, std::size_t index) const {
+inline bool configurations_t::get_as(std::string const& key, bool const& alternative) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return ! itr->second.at(index).empty() && itr->second.at(index) != "0" && itr->second.at(index) != "false";
+		return ! itr->second.empty() && itr->second.at(0) != "0" && itr->second.at(0) != "false";
 	} else {
 		return alternative;
 	}
 }
 template<>
-inline bool configurations_t::get_as(std::string const& key, bool&& alternative, std::size_t index) const {
+inline bool configurations_t::get_as(std::string const& key, bool&& alternative) const {
 	if (auto const itr = config_.find(key); itr != config_.cend()) {
-		return ! itr->second.at(index).empty() && itr->second.at(index) != "0" && itr->second.at(index) != "false";
+		return ! itr->second.empty() && itr->second.at(0) != "0" && itr->second.at(0) != "false";
 	} else {
 		return std::move(alternative);
 	}
