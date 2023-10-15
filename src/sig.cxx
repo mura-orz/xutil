@@ -36,7 +36,7 @@ extern "C" void handle_signal(int signal) noexcept {
 namespace xxx::sig {
 
 ///	@brief 	Disable the following signals: Interrupt, Terminate, Hangup.
-void disable_signal_handlers_in_current_thread() noexcept {
+void disable_signal_handlers_in_current_thread() {
 #ifndef _WIN32
 	::sigset_t ss{};
 	::sigemptyset(&ss);
