@@ -25,9 +25,13 @@ public:
 		procedure_(procedure) {}
 	///	@brief	Destructor.
 	~finally_t() {
-		try {
+		if constexpr (noexcept(procedure_()) {
 			procedure_();
-		} catch (...) {}
+		} else {
+			try {
+				procedure_();
+			} catch (...) {}
+		}
 	}
 
 private:
