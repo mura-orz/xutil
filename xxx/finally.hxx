@@ -25,7 +25,7 @@ public:
 		procedure_(procedure) {}
 	///	@brief	Destructor.
 	~finally_t() {
-		if constexpr (noexcept(procedure_()) {
+		if constexpr (noexcept(procedure_())) {
 			procedure_();
 		} else {
 			try {
