@@ -35,8 +35,15 @@ extern "C" void handle_signal(int signal) noexcept {
 
 namespace xxx::sig {
 
-///	@brief 	Disable the following signals: Interrupt, Terminate, Hangup.
-void disable_signal_handlers_in_current_thread() {
+void disable_signal_handlers() {
+	std::signal(SIGINT, ::handle_signal);
+	std::signal(SIGTERM, ::handle_signal);
+#ifndef _WIN32
+	std::signal(SIGHUP, ::handle_signal);
+#endif
+}
+
+void disable_signal_handlers_in_this_thread() {
 #ifndef _WIN32
 	::sigset_t ss{};
 	::sigemptyset(&ss);
@@ -45,14 +52,11 @@ void disable_signal_handlers_in_current_thread() {
 		throw std::system_error{ec, __func__};
 	}
 #else
-	std::signal(SIGINT, ::interrupting_signal_handler);
-	std::signal(SIGTERM, ::interrupting_signal_handler);
+	std::signal(SIGINT, ::handle_signal);
+	std::signal(SIGTERM, ::handle_signal);
 #endif
 }
 
-///	@brief 	Wait for one of the following signals: Interrupt, Terminate, Hangup.
-///	@param[in]	timeout		The timeout.
-///	@return		It returns @true if the signal occurred; otherwise, it returns false.
 bool wait_for_signals(std::chrono::milliseconds const& timeout) {
 #ifndef _WIN32
 	using namespace std::chrono_literals;
