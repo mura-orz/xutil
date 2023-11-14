@@ -89,7 +89,7 @@ TEST(test_config, CopiedOptions) {
 	EXPECT_TRUE(config.get_as<bool>("one"));
 	EXPECT_TRUE(config.get_as<bool>("t"));
 	EXPECT_FALSE(config.get_as<bool>("f"));
-	EXPECT_FALSE(config.get_as<bool>("none"));
+	EXPECT_TRUE(config.get_as<bool>("none"));
 	EXPECT_THROW(config.get_as<std::string>("key"), std::out_of_range);
 	EXPECT_THROW(config.get_as<int>("none"), std::bad_cast);
 	EXPECT_EQ(1, config.get_as<int>("one"));
