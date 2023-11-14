@@ -10,9 +10,17 @@
 
 namespace xxx::sig {
 
+<<<<<<< HEAD
 /// @brief	Disable several signal handlers in this program.
 ///		It disables the following signals: Interrupt, Terminate, Hangup.
 void disable_signal_handlers();
+=======
+/// @brief	Disable signal handlers in this process.
+void disable_signal_handlers();
+
+/// @brief	Disable signal handlers in this thread.
+void disable_signal_handlers_in_this_thread();
+>>>>>>> origin/main
 
 ///	@brief 	Wait for one of the following signals: Interrupt, Terminate, Hangup.
 ///	@param[in]	timeout		The timeout.
