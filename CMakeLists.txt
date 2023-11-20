@@ -65,6 +65,7 @@ target_sources				(xxx	PUBLIC
 	xxx/files.hxx
 	xxx/redux.hxx
 	xxx/queue.hxx
+	xxx/db.hxx
 	xxx/sig.hxx
 )
 target_compile_features		(xxx	PUBLIC		cxx_std_20)
