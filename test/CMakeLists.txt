@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD			20)
 set(CMAKE_CXX_STANDARD_REQUIRED	ON)
 set(CMAKE_CXX_EXTENSIONS		OFF)
 
+find_package(SQLite3)
 find_package(Threads		REQUIRED)	
 cmake_policy(SET			CMP0076		NEW)	# converts relative paths to absolute
 
@@ -28,11 +29,17 @@ if (GTest_FOUND)
 		$<${POSIX}:					xxx_posix>
 		$<${WIN32}:					xxx_win32>
 	)
+
+if(SQLite3_FOUND)
+	target_include_directories	(test	PRIVATE		${SQLite3_INCLUDE_DIRS})
+	target_link_libraries		(test	PRIVATE		${SQLite3_LIBRARIES})
+endif()
+
 	target_compile_features		(test	PRIVATE		cxx_std_20)
 	target_compile_options		(test	PRIVATE		${VALIDATOR} ${OPTIMIZER} ${LANG})
 	target_include_directories	(test	PRIVATE		".." ${GTEST_INCLUDE_DIRS})
 	target_link_libraries		(test	PRIVATE		xxx ${GTEST_BOTH_LIBRARIES})
-
+	
 	add_test					(unittest	test)
 
 endif()

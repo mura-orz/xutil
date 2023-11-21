@@ -12,6 +12,7 @@
 #include <xxx/queue.hxx>
 #include <xxx/redux.hxx>
 #include <xxx/sig.hxx>
+#include <xxx/db.hxx>
 #include <xxx/xxx.hxx>
 
 #include <gtest/gtest.h>
@@ -23,14 +24,16 @@
 #include <sstream>
 #include <stdexcept>
 
-TEST(test_cpp, Initialize) {
+TEST(test_cpp, Initialize)
+{
 	EXPECT_NO_THROW(xxx::initialize_cpp());
 	EXPECT_NO_THROW(xxx::initialize_cpp(""));
 	EXPECT_NO_THROW(xxx::initialize_cpp("C"));
 	EXPECT_NO_THROW(xxx::initialize_cpp("foobar"));
 }
 
-TEST(test_version, Version) {
+TEST(test_version, Version)
+{
 	auto const head_version = xxx_version;
 	auto const body_version = xxx::get_version();
 
@@ -40,21 +43,14 @@ TEST(test_version, Version) {
 	EXPECT_EQ(xxx::get_revision(head_version), xxx::get_revision(body_version));
 	EXPECT_EQ(xxx::get_extra_version(head_version), xxx::get_extra_version(body_version));
 
-	auto const bv
-		= xxx::get_major_version(body_version) << 24
-		| xxx::get_minor_version(body_version) << 16
-		| xxx::get_revision(body_version) << 8
-		| xxx::get_extra_version(body_version);
+	auto const bv = xxx::get_major_version(body_version) << 24 | xxx::get_minor_version(body_version) << 16 | xxx::get_revision(body_version) << 8 | xxx::get_extra_version(body_version);
 	EXPECT_EQ(body_version, bv);
-	auto const hv
-		= xxx::get_major_version(head_version) << 24
-		| xxx::get_minor_version(head_version) << 16
-		| xxx::get_revision(head_version) << 8
-		| xxx::get_extra_version(head_version);
+	auto const hv = xxx::get_major_version(head_version) << 24 | xxx::get_minor_version(head_version) << 16 | xxx::get_revision(head_version) << 8 | xxx::get_extra_version(head_version);
 	EXPECT_EQ(head_version, hv);
 }
 
-TEST(test_config, Empty) {
+TEST(test_config, Empty)
+{
 	using namespace std::string_literals;
 
 	xxx::config::configurations_t config;
@@ -65,7 +61,8 @@ TEST(test_config, Empty) {
 	EXPECT_EQ("baz"s, config.get_as<std::string>("key", std::string{"baz"}));
 	EXPECT_EQ("baz"s, config.get_as<std::string>("key", std::move(std::string{"baz"})));
 }
-TEST(test_config, CopiedOptions) {
+TEST(test_config, CopiedOptions)
+{
 	using namespace std::string_literals;
 
 	xxx::config::options_t options{
@@ -112,17 +109,20 @@ TEST(test_config, CopiedOptions) {
 	EXPECT_EQ(0, config.get_as("foo", std::move(0)));
 }
 
-TEST(test_config, MovedOptions) {
+TEST(test_config, MovedOptions)
+{
 	xxx::config::configurations_t config{std::move(xxx::config::options_t{{"foo", {"bar"}}})};
 	EXPECT_TRUE(config.contains("foo"));
 }
 
-TEST(test_config, GoodOptions) {
+TEST(test_config, GoodOptions)
+{
 	xxx::config::options_t options{{"Aa1.-_", {"bar"}}};
 	EXPECT_NO_THROW(xxx::config::configurations_t config{options});
 }
 
-TEST(test_config, BadOptions) {
+TEST(test_config, BadOptions)
+{
 	{
 		xxx::config::options_t options{{" foo ", {"bar"}}};
 		EXPECT_THROW(xxx::config::configurations_t config{std::move(options)}, std::invalid_argument);
@@ -153,10 +153,11 @@ TEST(test_config, BadOptions) {
 	}
 }
 
-TEST(test_config, GetOpt) {
+TEST(test_config, GetOpt)
+{
 	using namespace std::string_literals;
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("arg1"), const_cast<char*>("arg2"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("arg1"), const_cast<char *>("arg2"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
@@ -166,7 +167,7 @@ TEST(test_config, GetOpt) {
 		EXPECT_EQ("arg2"s, opts.at("").at(1));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("arg1"), const_cast<char*>("arg1"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("arg1"), const_cast<char *>("arg1"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
@@ -176,7 +177,7 @@ TEST(test_config, GetOpt) {
 		EXPECT_EQ("arg1"s, opts.at("").at(1));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("-o=1"), const_cast<char*>("-o:2"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("-o=1"), const_cast<char *>("-o:2"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
@@ -186,7 +187,7 @@ TEST(test_config, GetOpt) {
 		EXPECT_EQ("2"s, opts.at("o").at(1));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("-"), const_cast<char*>("-opt"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("-"), const_cast<char *>("-opt"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
@@ -198,7 +199,7 @@ TEST(test_config, GetOpt) {
 		EXPECT_TRUE(opts.contains("opt"));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("-h"), const_cast<char*>("arg1"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("-h"), const_cast<char *>("arg1"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(1, result);
@@ -209,7 +210,7 @@ TEST(test_config, GetOpt) {
 		EXPECT_TRUE(opts.contains("h"));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("--help"), const_cast<char*>("arg1"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("--help"), const_cast<char *>("arg1"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(1, result);
@@ -221,7 +222,7 @@ TEST(test_config, GetOpt) {
 		EXPECT_EQ(""s, opts.at("help").at(0));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("-o=1"), const_cast<char*>("-O:2"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("-o=1"), const_cast<char *>("-O:2"), nullptr};
 		int const ac{3};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
@@ -232,14 +233,14 @@ TEST(test_config, GetOpt) {
 		EXPECT_EQ("2"s, opts.at("O").at(0));
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), nullptr};
 		int const ac{1};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(0, result);
 		EXPECT_EQ(0, opts.size());
 	}
 	{
-		char*	  av[] = {const_cast<char*>("foo"), const_cast<char*>("-o-1"), nullptr};
+		char *av[] = {const_cast<char *>("foo"), const_cast<char *>("-o-1"), nullptr};
 		int const ac{2};
 		auto const [result, opts] = xxx::config::get_options(ac, av);
 		EXPECT_EQ(-1, result);
@@ -247,7 +248,8 @@ TEST(test_config, GetOpt) {
 	}
 }
 
-TEST(test_config, BadConf) {
+TEST(test_config, BadConf)
+{
 	using namespace std::string_literals;
 	EXPECT_THROW(xxx::config::configurations_t config{"nothing.conf"}, std::ios::failure);
 	{
@@ -274,7 +276,8 @@ TEST(test_config, BadConf) {
 	std::filesystem::remove("test.conf");
 }
 
-TEST(test_config, LoadOptions) {
+TEST(test_config, LoadOptions)
+{
 	using namespace std::string_literals;
 	{
 		std::ofstream ofs{"test.conf"};
@@ -307,10 +310,11 @@ TEST(test_config, LoadOptions) {
 	std::filesystem::remove("test.conf");
 }
 
-TEST(test_files, read_file) {
+TEST(test_files, read_file)
+{
 	using namespace std::string_literals;
 	std::filesystem::path const path{"test.txt"};
-	std::ostringstream			oss;
+	std::ostringstream oss;
 	oss << "test1" << std::endl
 		<< "test2" << std::endl;
 
@@ -319,7 +323,8 @@ TEST(test_files, read_file) {
 
 	{
 		std::ofstream ofs{path};
-		if (ofs) ofs << oss.str();
+		if (ofs)
+			ofs << oss.str();
 	}
 
 	auto const file1 = xxx::file::read_whole<char>(path, false);
@@ -332,15 +337,18 @@ TEST(test_files, read_file) {
 	std::filesystem::remove(path);
 }
 
-TEST(test_files, read_line) {
+TEST(test_files, read_line)
+{
 	using namespace std::string_literals;
 	std::filesystem::path const path{"test.txt"};
-	std::ostringstream			oss;
+	std::ostringstream oss;
 	oss << "test1" << std::endl
 		<< "test2" << std::endl;
 
 	{
-		{ std::ofstream ofs{path}; }
+		{
+			std::ofstream ofs{path};
+		}
 		auto const lines = xxx::file::read_lines<char>(path);
 		EXPECT_EQ(0u, lines.size());
 	}
@@ -348,7 +356,8 @@ TEST(test_files, read_line) {
 	{
 		{
 			std::ofstream ofs{path};
-			if (ofs) ofs << "test1";
+			if (ofs)
+				ofs << "test1";
 		}
 		auto const lines = xxx::file::read_lines<char>(path);
 		EXPECT_EQ(1u, lines.size());
@@ -358,7 +367,8 @@ TEST(test_files, read_line) {
 	{
 		{
 			std::ofstream ofs{path};
-			if (ofs) ofs << oss.str();
+			if (ofs)
+				ofs << oss.str();
 		}
 		auto const lines = xxx::file::read_lines<char>(path);
 		EXPECT_EQ(2u, lines.size());
@@ -369,7 +379,8 @@ TEST(test_files, read_line) {
 	std::filesystem::remove(path);
 }
 
-TEST(test_config, Copy) {
+TEST(test_config, Copy)
+{
 	using namespace std::string_literals;
 	xxx::config::configurations_t config{xxx::config::options_t{{"a", {"b"}}}};
 	EXPECT_EQ("b"s, config.get("a").at(0));
@@ -377,7 +388,8 @@ TEST(test_config, Copy) {
 	EXPECT_EQ("b"s, copied.get("a").at(0));
 }
 
-TEST(test_config, OptionsAndFile) {
+TEST(test_config, OptionsAndFile)
+{
 	using namespace std::string_literals;
 	{
 		std::ofstream ofs{"test.conf"};
@@ -399,15 +411,18 @@ TEST(test_config, OptionsAndFile) {
 	std::filesystem::remove("test.conf");
 }
 
-namespace {
+namespace
+{
 
-bool contains(std::string const& s, std::regex const& re) {
-	return std::regex_match(s.cbegin(), s.cend(), re);
-};
+	bool contains(std::string const &s, std::regex const &re)
+	{
+		return std::regex_match(s.cbegin(), s.cend(), re);
+	};
 
-}	 // namespace
+} // namespace
 
-TEST(test_exception, Dump) {
+TEST(test_exception, Dump)
+{
 	// To use << operator; otherwise, xxx::dump_exception() is available instead.
 	using namespace xxx::exception_iostream;
 	using namespace std::string_literals;
@@ -435,7 +450,8 @@ TEST(test_exception, Dump) {
 	EXPECT_NE(std::string::npos, oss2.str().find("exception"));
 #endif
 }
-TEST(test_exception, Messaged) {
+TEST(test_exception, Messaged)
+{
 	// To use << operator; otherwise, xxx::dump_exception() is available instead.
 	using namespace xxx::exception_iostream;
 	using namespace std::string_literals;
@@ -451,23 +467,33 @@ TEST(test_exception, Messaged) {
 	EXPECT_NE(std::string::npos, oss.str().find("runtime_error"));
 #endif
 }
-TEST(test_exception, Nest) {
+TEST(test_exception, Nest)
+{
 	// To use << operator; otherwise, xxx::dump_exception() is available instead.
 	using namespace xxx::exception_iostream;
 	using namespace std::string_literals;
 
 	// Nested
-	try {
-		try {
-			try {
-				(void)std::string().at(1);	  // Raise an exception forcefully.
-			} catch (std::exception const& e) {
+	try
+	{
+		try
+		{
+			try
+			{
+				(void)std::string().at(1); // Raise an exception forcefully.
+			}
+			catch (std::exception const &e)
+			{
 				std::throw_with_nested(e);
 			}
-		} catch (std::exception const& e) {
+		}
+		catch (std::exception const &e)
+		{
 			std::throw_with_nested(e);
 		}
-	} catch (std::exception const& e) {
+	}
+	catch (std::exception const &e)
+	{
 		std::ostringstream oss;
 		xxx::dump_exception(oss, e);
 #if defined(_MSC_VER)
@@ -481,20 +507,24 @@ TEST(test_exception, Nest) {
 	}
 }
 
-TEST(test_exception, Handling) {
+TEST(test_exception, Handling)
+{
 	int f;
 
 	f = 0;
-	xxx::ignore_exceptions([&]() {
+	xxx::ignore_exceptions([&]()
+						   {
 		f = 1;
-		throw std::runtime_error(__func__);
-	});
+		throw std::runtime_error(__func__); });
 	EXPECT_EQ(1, f);
 
 	f = 0;
-	xxx::ignore_exceptions([&]() {
+	xxx::ignore_exceptions([&]()
+						   {
 		f	+= 1;
-		throw std::runtime_error(__func__); }, [&f](std::exception const&) {
+		throw std::runtime_error(__func__); },
+						   [&f](std::exception const &)
+						   {
 		f	+= 10;
 		xxx::ignore_exceptions([&]() {
 			f	+= 100;
@@ -502,18 +532,22 @@ TEST(test_exception, Handling) {
 		f	+= 1000; });
 	EXPECT_EQ(1111, f);
 
-	f	   = 0;
-	auto e = xxx::suppress_exceptions([&]() {
+	f = 0;
+	auto e = xxx::suppress_exceptions([&]()
+									  {
 		f += 1;
-		throw std::runtime_error("any exception");
-	});
+		throw std::runtime_error("any exception"); });
 	EXPECT_TRUE(e);
-	EXPECT_FALSE(! e);
-	if (e) {
-		try {
+	EXPECT_FALSE(!e);
+	if (e)
+	{
+		try
+		{
 			f += 10;
 			std::rethrow_exception(e);
-		} catch (std::exception const&) {
+		}
+		catch (std::exception const &)
+		{
 			f += 100;
 		}
 		f += 1000;
@@ -521,90 +555,106 @@ TEST(test_exception, Handling) {
 	EXPECT_EQ(1111, f);
 
 	f = 0;
-	e = xxx::suppress_exceptions([&]() {
-		f += 1;
-	});
-	EXPECT_TRUE(! e);
+	e = xxx::suppress_exceptions([&]()
+								 { f += 1; });
+	EXPECT_TRUE(!e);
 	EXPECT_FALSE(e);
-	if (! e) {
+	if (!e)
+	{
 		f += 10;
 	}
 	EXPECT_EQ(11, f);
 }
 
-TEST(test_finally, finally) {
+TEST(test_finally, finally)
+{
 	std::filesystem::path const path{"test2.log"};
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
 	{
-		xxx::finally_t finally([=]() { std::ofstream ofs{path}; });
+		xxx::finally_t finally([=]()
+							   { std::ofstream ofs{path}; });
 		EXPECT_FALSE(std::filesystem::exists(path));
 	}
 	EXPECT_TRUE(std::filesystem::exists(path));
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
 	{
-		xxx::finally_t finally(std::move([=]() { std::ofstream ofs{path}; }));
+		xxx::finally_t finally(std::move([=]()
+										 { std::ofstream ofs{path}; }));
 		EXPECT_FALSE(std::filesystem::exists(path));
 	}
 	EXPECT_TRUE(std::filesystem::exists(path));
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
-	try {
-		xxx::finally_t finally([=]() { std::ofstream ofs{path}; });
+	try
+	{
+		xxx::finally_t finally([=]()
+							   { std::ofstream ofs{path}; });
 		EXPECT_FALSE(std::filesystem::exists(path));
 		throw std::runtime_error("an exception occurred");
-	} catch (std::exception const&) {}
+	}
+	catch (std::exception const &)
+	{
+	}
 	EXPECT_TRUE(std::filesystem::exists(path));
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 }
 
-namespace {
+namespace
+{
 
-std::string read_and_clear_log(std::filesystem::path const& path) {
-	std::ostringstream oss;
+	std::string read_and_clear_log(std::filesystem::path const &path)
 	{
-		std::ifstream ifs;
-		ifs.exceptions(std::ios::badbit | std::ios::failbit);
-		ifs.open(path);
-		ifs.exceptions(std::ios::badbit);
-		std::copy(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(oss));
+		std::ostringstream oss;
+		{
+			std::ifstream ifs;
+			ifs.exceptions(std::ios::badbit | std::ios::failbit);
+			ifs.open(path);
+			ifs.exceptions(std::ios::badbit);
+			std::copy(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>(), std::ostreambuf_iterator<char>(oss));
+		}
+		std::filesystem::remove(path);
+		return oss.str();
 	}
-	std::filesystem::remove(path);
-	return oss.str();
-}
 
-std::regex const oops_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[F\]\{[^:]+:[0-9_]{5}\}.*oops\n?$)"};
-std::regex const err_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[E\]\{[^:]+:[0-9_]{5}\}.*err\n?$)"};
-std::regex const warn_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[W\]\{[^:]+:[0-9_]{5}\}.*warn\n?$)"};
-std::regex const notice_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[N\]\{[^:]+:[0-9_]{5}\}.*notice\n?$)"};
-std::regex const info_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\]\{[^:]+:[0-9_]{5}\}.*info\n?$)"};
-std::regex const trace_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*trace\n?$)"};
-std::regex const debug_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[D\]\{[^:]+:[0-9_]{5}\}.*debug\n?$)"};
-std::regex const verbose_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[V\]\{[^:]+:[0-9_]{5}\}.*verbose\n?$)"};
+	std::regex const oops_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[F\]\{[^:]+:[0-9_]{5}\}.*oops\n?$)"};
+	std::regex const err_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[E\]\{[^:]+:[0-9_]{5}\}.*err\n?$)"};
+	std::regex const warn_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[W\]\{[^:]+:[0-9_]{5}\}.*warn\n?$)"};
+	std::regex const notice_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[N\]\{[^:]+:[0-9_]{5}\}.*notice\n?$)"};
+	std::regex const info_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\]\{[^:]+:[0-9_]{5}\}.*info\n?$)"};
+	std::regex const trace_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*trace\n?$)"};
+	std::regex const debug_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[D\]\{[^:]+:[0-9_]{5}\}.*debug\n?$)"};
+	std::regex const verbose_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[V\]\{[^:]+:[0-9_]{5}\}.*verbose\n?$)"};
 
-}	 // namespace
+} // namespace
 
-TEST(test_logger, Default_logger) {
+TEST(test_logger, Default_logger)
+{
 	using namespace std::string_literals;
 	std::filesystem::path const path{"test.log"};
-	auto&						logger = xxx::log::logger("");
+	auto &logger = xxx::log::logger("");
 	logger.set_console(false);
 	logger.set_path("");
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
@@ -674,14 +724,16 @@ TEST(test_logger, Default_logger) {
 	EXPECT_EQ(""s, read_and_clear_log(path));
 }
 
-TEST(test_logger, Default_logger_all) {
+TEST(test_logger, Default_logger_all)
+{
 	std::filesystem::path const path{"test.log"};
-	auto&						logger = xxx::log::logger("");
+	auto &logger = xxx::log::logger("");
 	logger.set_level(xxx::log::level_t::All);
 	logger.set_path("");
 	logger.set_console(false);
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
@@ -751,15 +803,17 @@ TEST(test_logger, Default_logger_all) {
 	EXPECT_TRUE(contains(read_and_clear_log(path), verbose_re));
 }
 
-TEST(test_logger, Logger_level) {
+TEST(test_logger, Logger_level)
+{
 	using namespace std::string_literals;
 	std::filesystem::path const path{"test.log"};
-	auto&						logger = xxx::log::logger("");
+	auto &logger = xxx::log::logger("");
 	logger.set_level(xxx::log::level_t::Fatal);
 	logger.set_path("");
 	logger.set_console(false);
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
@@ -829,20 +883,23 @@ TEST(test_logger, Logger_level) {
 	EXPECT_EQ(""s, read_and_clear_log(path));
 }
 
-TEST(test_logger, Concatenate) {
+TEST(test_logger, Concatenate)
+{
 	using namespace std::string_literals;
 	std::filesystem::path const path{"test.log"};
 	EXPECT_EQ("arg2"s, xxx::log::cat("arg", 2));
 }
-TEST(test_logger, Enclose) {
+TEST(test_logger, Enclose)
+{
 	using namespace std::string_literals;
 	EXPECT_EQ("(arg,2)"s, xxx::log::enclose("arg", 2));
 }
 
-TEST(test_logger, Trace) {
+TEST(test_logger, Trace)
+{
 	using namespace std::string_literals;
 	std::filesystem::path const path{"test.log"};
-	auto&						logger = xxx::log::logger("");
+	auto &logger = xxx::log::logger("");
 	logger.set_level(xxx::log::level_t::All);
 
 	std::regex const info_tracer_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\]\{[^:]+:[0-9_]{5}\}.*>>>\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\]\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
@@ -853,7 +910,8 @@ TEST(test_logger, Trace) {
 	std::regex const tracer_arg_3_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*<<<\(3\)\n?$)"};
 
 	logger.set_path("");
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 	logger.set_path(path);
@@ -897,20 +955,23 @@ TEST(test_logger, Trace) {
 	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_arg_3_re));
 	logger.set_path(path);
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 }
 
-TEST(test_logger, Another_logger) {
+TEST(test_logger, Another_logger)
+{
 	std::filesystem::path const path{"test2.log"};
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 
 	xxx::log::add_logger("tag", xxx::log::level_t::All, path, "", false);
 	{
-		auto& logger = xxx::log::logger("tag");
+		auto &logger = xxx::log::logger("tag");
 
 		logger.set_path(path);
 		logger.oops("oops");
@@ -980,14 +1041,19 @@ TEST(test_logger, Another_logger) {
 	xxx::log::remove_logger("tag");
 	EXPECT_THROW(xxx::log::logger("tag"), std::invalid_argument);
 
-	if (std::filesystem::exists(path)) {
+	if (std::filesystem::exists(path))
+	{
 		std::filesystem::remove(path);
 	}
 }
 
-TEST(test_redux, Action) {
-	enum class id_t { Invalid,
-					  Valid };
+TEST(test_redux, Action)
+{
+	enum class id_t
+	{
+		Invalid,
+		Valid
+	};
 	using action_t = xxx::redux::action<id_t>;
 
 	action_t ai{id_t::Invalid};
@@ -1007,14 +1073,20 @@ TEST(test_redux, Action) {
 	EXPECT_EQ(2, a12.option<std::vector<int>>().at(1));
 }
 
-TEST(test_redux, State) {
-	enum class id_t { Invalid,
-					  Valid };
+TEST(test_redux, State)
+{
+	enum class id_t
+	{
+		Invalid,
+		Valid
+	};
 	using action_t = xxx::redux::action<id_t>;
-	using store_t  = xxx::redux::store<int, action_t>;
+	using store_t = xxx::redux::store<int, action_t>;
 
-	auto const reducer = [](int const& s, action_t const& a) -> int {
-		switch (a.id()) {
+	auto const reducer = [](int const &s, action_t const &a) -> int
+	{
+		switch (a.id())
+		{
 		case id_t::Invalid:
 			return 0;
 		default:
@@ -1023,24 +1095,23 @@ TEST(test_redux, State) {
 	};
 
 	action_t action{id_t::Invalid};
-	store_t	 store{1, reducer};
+	store_t store{1, reducer};
 
-	store.state([](auto const& state) {
-		EXPECT_EQ(1, state);
-	});
-	store.add_listener([](int const& s, action_t const& a) {
+	store.state([](auto const &state)
+				{ EXPECT_EQ(1, state); });
+	store.add_listener([](int const &s, action_t const &a)
+					   {
 		EXPECT_EQ(id_t::Invalid, a.id());
 		EXPECT_EQ(0, s);
-		return s;
-	});
+		return s; });
 	store.dispatch(action);
-	store.state([](auto const& state) {
-		EXPECT_EQ(0, state);
-	});
+	store.state([](auto const &state)
+				{ EXPECT_EQ(0, state); });
 	store.clear_listeners();
 }
 
-TEST(test_queue, Queue) {
+TEST(test_queue, Queue)
+{
 	xxx::queue<int> que;
 	EXPECT_TRUE(que.empty());
 	que.enqueue(std::move(1));
@@ -1056,3 +1127,39 @@ TEST(test_queue, Queue) {
 	que.terminate();
 	EXPECT_TRUE(que.terminated());
 }
+
+#if __has_include("sqlite3.h")
+
+TEST(test_db, Database)
+{
+	std::filesystem::path const path = "db.db";
+	if (std::filesystem::exists(path))
+	{
+		std::filesystem::remove(path);
+	}
+	xxx::db::sl3::db_t dbm{};
+
+	xxx::db::sl3::db_t db{path};
+
+	db.execute(R"(
+		CREATE TABLE IF NOT EXISTS test (
+			id INTEGER
+		);
+	)");
+	auto stmt1 = db.prepare("INSERT INTO test(id) values (?)");
+	stmt1.execute(1);
+	auto stmt2 = db.execute("SELECT * FROM test ORDER BY id DESC");
+	int id = 0;
+	EXPECT_TRUE(stmt2.fetch(id));
+	EXPECT_EQ(1, id);
+	EXPECT_FALSE(stmt2.fetch(id));
+	stmt1.execute(2);
+	auto stmt3 = db.execute("SELECT * FROM test ORDER BY id DESC");
+	EXPECT_TRUE(stmt3.fetch(id));
+	EXPECT_EQ(2, id);
+	EXPECT_TRUE(stmt3.fetch(id));
+	EXPECT_EQ(1, id);
+	EXPECT_FALSE(stmt3.fetch(id));
+}
+
+#endif
