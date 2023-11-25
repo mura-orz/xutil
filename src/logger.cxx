@@ -262,43 +262,55 @@ void logger_t::set_path(std::filesystem::path const& path, bool daily) {
 	}
 }
 
-std::once_flag											   logger_once_s;
-std::mutex												   loggers_mutex_s;
-std::unordered_map<std::string, std::unique_ptr<logger_t>> loggers_s;
+std::once_flag																logger_once_s;
+std::mutex																	loggers_mutex_s;
+std::unique_ptr<std::unordered_map<std::string, std::unique_ptr<logger_t>>> loggers_s;
+// static instance of std::unordered_map might crash if this logger is used in another static instance.
 
 void add_logger(std::string const& tag, level_t level, std::filesystem::path const& path, std::string_view const logger, bool console) {
 	validate_argument(! tag.empty());
 
 	std::lock_guard lock{loggers_mutex_s};
 
-	auto itr{loggers_s.find(tag)};
-	validate_argument(itr == std::end(loggers_s));
+	std::call_once(logger_once_s, []() {
+		std::lock_guard lock{loggers_mutex_s};
+		if (! loggers_s) loggers_s = std::make_unique<std::unordered_map<std::string, std::unique_ptr<logger_t>>>();
+		if (! loggers_s->contains("")) { loggers_s->insert(std::make_pair("", std::make_unique<logger_t>())); }
+	});
 
-	loggers_s[tag] = std::make_unique<logger_t>(level, path, logger, console);
+	auto itr{loggers_s->find(tag)};
+	validate_argument(itr == std::end(*loggers_s));
+
+	loggers_s->insert(std::make_pair("", std::make_unique<logger_t>(level, path, logger, console)));
 }
 
 void remove_logger(std::string const& tag) {
 	validate_argument(! tag.empty());
 
+	std::call_once(logger_once_s, []() {
+		std::lock_guard lock{loggers_mutex_s};
+		if (! loggers_s) loggers_s = std::make_unique<std::unordered_map<std::string, std::unique_ptr<logger_t>>>();
+		if (! loggers_s->contains("")) { loggers_s->insert(std::make_pair("", std::make_unique<logger_t>())); }
+	});
+
 	std::lock_guard lock{loggers_mutex_s};
 
-	auto itr{loggers_s.find(tag)};
-	validate_argument(itr != std::end(loggers_s));
-	loggers_s.erase(itr);
+	auto itr{loggers_s->find(tag)};
+	validate_argument(itr != std::end(*loggers_s));
+	loggers_s->erase(itr);
 }
 
 logger_t& logger(std::string const& tag) {
 	std::call_once(logger_once_s, []() {
 		std::lock_guard lock{loggers_mutex_s};
-		if (! loggers_s.contains("")) {
-			loggers_s[""] = std::make_unique<logger_t>();
-		}
+		if (! loggers_s) loggers_s = std::make_unique<std::unordered_map<std::string, std::unique_ptr<logger_t>>>();
+		if (! loggers_s->contains("")) { loggers_s->insert(std::make_pair("", std::make_unique<logger_t>())); }
 	});
 
 	std::lock_guard lock{loggers_mutex_s};
 
-	auto itr{loggers_s.find(tag)};
-	validate_argument(itr != std::end(loggers_s));
+	auto itr{loggers_s->find(tag)};
+	validate_argument(itr != std::end(*loggers_s));
 	return *itr->second;
 }
 
