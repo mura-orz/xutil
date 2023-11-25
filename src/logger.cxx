@@ -281,7 +281,7 @@ void add_logger(std::string const& tag, level_t level, std::filesystem::path con
 	auto itr{loggers_s->find(tag)};
 	validate_argument(itr == std::end(*loggers_s));
 
-	loggers_s->insert(std::make_pair("", std::make_unique<logger_t>(level, path, logger, console)));
+	loggers_s->insert(std::make_pair(tag, std::make_unique<logger_t>(level, path, logger, console)));
 }
 
 void remove_logger(std::string const& tag) {
