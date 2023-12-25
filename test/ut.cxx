@@ -1054,21 +1054,21 @@ TEST(test_redux, Action)
 		Invalid,
 		Valid
 	};
-	using action_t = xxx::redux::action<id_t>;
+	using action_t = xxx::redux::action<id_t,unsigned>;
 
 	action_t ai{id_t::Invalid};
-	EXPECT_EQ(id_t::Invalid, ai.id());
+	EXPECT_EQ(id_t::Invalid, ai.type());
 	action_t av{id_t::Valid};
-	EXPECT_EQ(id_t::Valid, av.id());
+	EXPECT_EQ(id_t::Valid, av.type());
 	action_t a1{id_t::Valid, 1};
-	EXPECT_EQ(id_t::Valid, a1.id());
+	EXPECT_EQ(id_t::Valid, a1.type());
 	EXPECT_EQ(1, a1.option<int>());
 	action_t a2{id_t::Valid, std::move(2)};
-	EXPECT_EQ(id_t::Valid, a2.id());
+	EXPECT_EQ(id_t::Valid, a2.type());
 	EXPECT_EQ(2, a2.option<int>());
 	EXPECT_EQ(2, a2.option<int>());
 	action_t a12{id_t::Valid, std::vector({1, 2})};
-	EXPECT_EQ(id_t::Valid, a12.id());
+	EXPECT_EQ(id_t::Valid, a12.type());
 	EXPECT_EQ(1, a12.option<std::vector<int>>().at(0));
 	EXPECT_EQ(2, a12.option<std::vector<int>>().at(1));
 }
@@ -1080,12 +1080,12 @@ TEST(test_redux, State)
 		Invalid,
 		Valid
 	};
-	using action_t = xxx::redux::action<id_t>;
+	using action_t = xxx::redux::action<id_t,unsigned>;
 	using store_t = xxx::redux::store<int, action_t>;
 
 	auto const reducer = [](int const &s, action_t const &a) -> int
 	{
-		switch (a.id())
+		switch (a.type())
 		{
 		case id_t::Invalid:
 			return 0;
@@ -1101,7 +1101,7 @@ TEST(test_redux, State)
 				{ EXPECT_EQ(1, state); });
 	store.add_listener([](int const &s, action_t const &a)
 					   {
-		EXPECT_EQ(id_t::Invalid, a.id());
+		EXPECT_EQ(id_t::Invalid, a.type());
 		EXPECT_EQ(0, s);
 		return s; });
 	store.dispatch(action);
