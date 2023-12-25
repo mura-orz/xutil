@@ -19,11 +19,15 @@
 namespace xxx::redux {
 
 ///	@brief	Action
-///	@tparam	Id	Identifier of the action type.
-template<typename Id>
+///	@tparam	Type	Identifier of the action type.
+///	@tparam	Id		Identifier of the action.
+template<typename Type, typename Id>
 class action {
 public:
 	///	@brief	Gets the identifier of the action type.
+	///	@return	The identifier.
+	auto type() const noexcept { return type_; }
+	///	@brief	Gets the identifier of the action.
 	///	@return	The identifier.
 	auto id() const noexcept { return id_; }
 	///	@brief	Gets the options.
@@ -34,26 +38,34 @@ public:
 
 	///	@brief	Constructor.
 	action() :
-		id_{}, option_{} {}
+		type_{}, id_{}, option_{} {}
 	///	@brief	Constructor.
-	///	@param[in]	id		Identifier of the action type.
-	explicit action(Id id) :
-		id_{id}, option_{} {}
+	///	@param[in]	type		Identifier of the action type.
+	explicit action(Type type) :
+		type_{type}, id_{}, option_{} {}
 	///	@brief	Constructor.
-	///	@param[in]	id		Identifier of the action type.
-	///	@param[in]	optino		Option of the @p action.
+	///	@param[in]	type	Identifier of the action type.
+	///	@param[in]	id		Identifier of the action.
 	template<typename P>
-	action(Id id, P const& option) :
-		id_{id}, option_{option} {}
+	action(Type type, Id id) :
+		type_{type}, id_{id}, option_{} {}
 	///	@brief	Constructor.
-	///	@param[in]	id		Identifier of the action type.
-	///	@param[in]	optino		Option of the @p action.
+	///	@param[in]	type	Identifier of the action type.
+	///	@param[in]	option		Option of the @p action.
 	template<typename P>
-	action(Id id, P&& option) :
-		id_{id}, option_{std::move(option)} {}
+	action(Type type, P const& option) :
+		type_{type}, id_{}, option_{option} {}
+	///	@brief	Constructor.
+	///	@param[in]	type	Identifier of the action type.
+	///	@param[in]	id		Identifier of the action.
+	///	@param[in]	option		Option of the @p action.
+	template<typename P>
+	action(Type type, Id id, P const& option) :
+		type_{type}, id_{id}, option_{option} {}
 
 private:
-	Id		 id_;		 ///< Identifier of the action type.
+	Type	 type_;		 ///< Identifier of the action type.
+	Id		 id_;		 ///< Identifier of the action.
 	std::any option_;	 ///< Option of the action
 };
 
