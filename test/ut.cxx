@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include <tuple>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -1149,16 +1150,16 @@ TEST(test_db, Database)
 	auto stmt1 = db.prepare("INSERT INTO test(id) values (?)");
 	stmt1.execute(1);
 	auto stmt2 = db.execute("SELECT * FROM test ORDER BY id DESC");
-	int id = 0;
+	std::tuple<int>id {0};
 	EXPECT_TRUE(stmt2.fetch(id));
-	EXPECT_EQ(1, id);
+	EXPECT_EQ(1, std::get<0>(id));
 	EXPECT_FALSE(stmt2.fetch(id));
 	stmt1.execute(2);
 	auto stmt3 = db.execute("SELECT * FROM test ORDER BY id DESC");
 	EXPECT_TRUE(stmt3.fetch(id));
-	EXPECT_EQ(2, id);
+	EXPECT_EQ(2, std::get<0>(id));
 	EXPECT_TRUE(stmt3.fetch(id));
-	EXPECT_EQ(1, id);
+	EXPECT_EQ(1, std::get<0>(id));
 	EXPECT_FALSE(stmt3.fetch(id));
 }
 
