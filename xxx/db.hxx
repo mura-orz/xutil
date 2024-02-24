@@ -9,16 +9,26 @@
 #include "sqlite3.h"	// SQLite
 
 #include <string_view>
+#include <type_traits>
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <numeric>
 #include <optional>
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace xxx::db::sl3 {
+
+template<typename>
+struct is_tuple : std::false_type {};
+template<typename... T>
+struct is_tuple<std::tuple<T...>> : std::true_type {};
+
+using timestamp_t = std::chrono::system_clock::time_point;
 
 enum class error_code_t {
 	Aborted		= SQLITE_ABORT,		   // Aborted
@@ -194,6 +204,7 @@ public:
 		step_row();
 	}
 
+#if 0
 	template<typename... Arguments>
 	bool fetch(Arguments&... arguments) {
 		if (! fetch_) { step_row(); }
@@ -204,6 +215,18 @@ public:
 		}
 		return false;
 	}
+#else
+	template<typename... Arguments>
+	bool fetch(std::tuple<Arguments...>& argument) {
+		if (! fetch_) { step_row(); }
+		if (fetch_) {
+			column(argument);
+			fetch_ = false;	   // fetched.
+			return true;
+		}
+		return false;
+	}
+#endif
 
 private:
 	void reset() {
@@ -226,6 +249,7 @@ private:
 		bind<Index + 1>(type, arguments...);
 	}
 
+#if 0
 	template<int Column = 0>
 	void column() {}
 
@@ -234,6 +258,16 @@ private:
 		binds_t<T>::column(statement_, Column, argument);
 		column<Column + 1>(arguments...);
 	}
+#else
+	template<std::size_t Column = 0, typename T>
+	void column(T& t) {
+		if constexpr (Column < std::tuple_size<T>::value) {
+			auto& x = std::get<Column>(t);
+			binds_t<std::remove_reference_t<decltype(x)>>::column(statement_, Column, x);
+			column<Column + 1>(t);
+		}
+	}
+#endif
 
 private:
 	::sqlite3_stmt* statement_ = nullptr;
@@ -395,9 +429,46 @@ struct binds_t<std::optional<T>> {
 };
 
 template<>
+struct binds_t<timestamp_t> {
+	static int bind(::sqlite3_stmt* statement, int index, timestamp_t const& argument, bind_type_t) {
+		auto const data = std::chrono::system_clock::to_time_t(argument);
+
+		return ::sqlite3_bind_int64(statement, index, data);
+	}
+	static void column(::sqlite3_stmt* statement, int column, timestamp_t& argument) {
+		auto const data = ::sqlite3_column_int64(statement, column);
+
+		argument = std::chrono::system_clock::from_time_t(static_cast<std::time_t>(data));
+	}
+};
+
+template<>
 struct binds_t<std::nullopt_t> {
 	static int	bind(::sqlite3_stmt* statement, int index, std::nullopt_t const&, bind_type_t) { return ::sqlite3_bind_null(statement, index); }
 	static void column(::sqlite3_stmt*, int, std::nullopt_t& argument) { argument = std::nullopt; }
+};
+
+class transaction_t {
+public:
+	void commit(bool committed = true) noexcept { committed_ = committed; }
+
+	transaction_t(db_t& db, transaction_type_t type = transaction_type_t::Deferred) :
+		db_{db}, committed_{} {
+		db_.begin(type);
+	}
+	transaction_t(transaction_t&& rhs)		= delete;
+	transaction_t(transaction_t const& rhs) = delete;
+	~transaction_t() {
+		if (committed_) {
+			db_.commit();
+		} else {
+			db_.rollback();
+		}
+	}
+
+private:
+	db_t& db_;
+	bool  committed_;
 };
 
 }	 // namespace xxx::db::sl3
