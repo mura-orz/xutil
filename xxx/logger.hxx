@@ -526,7 +526,7 @@ public:
 	void
 	trace(Args... args)
 	{
-		logger_.log(level_, pos_, "--- ", cat(args...));
+		logger_.log(level_, "---" + cat(args...), pos_);
 	}
 	///	@brief	Sets result of the method.
 	///	@param[in]		result		Result of the method.
