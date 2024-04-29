@@ -55,6 +55,8 @@ target_sources				(xxx	PRIVATE
 	src/logger.cxx
 	src/config.cxx
 	src/sig.cxx
+	src/sqlite3.c
+	src/sqlite3.c
 )
 target_sources				(xxx	PUBLIC
 	xxx/xxx.hxx
@@ -67,6 +69,8 @@ target_sources				(xxx	PUBLIC
 	xxx/queue.hxx
 	xxx/db.hxx
 	xxx/sig.hxx
+	xxx/sqlite3.h
+	xxx/sqlite3ext.h
 )
 target_compile_features		(xxx	PUBLIC		cxx_std_20)
 target_compile_options		(xxx	PUBLIC		${VALIDATOR} ${OPTIMIZER} ${LANG})
