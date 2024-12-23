@@ -31,7 +31,7 @@ extern "C" void handle_signal(int signal) noexcept {
 
 namespace xxx::sig {
 
-void disable_signal_handlers() {
+void disable_signal_handlers() noexcept {
 	// It uses orginal handler instead of SIGIGN
 	// otherwise wait_for_signals does not work.
 	std::signal(SIGINT, ::handle_signal);
