@@ -117,7 +117,7 @@ get_options(int ac, char* av[]) {
 	if (args.empty()) return {0, {}};
 	try {
 #if __has_include(<ranges>)
-		auto const options = std::accumulate(args.begin(), args.end(), std::move(options_t{}), [](auto&& res, auto const& a) {
+		auto const options = std::accumulate(args.begin(), args.end(), options_t{}, [](auto&& res, auto const& a) {
 			if (a == "-" || ! a.starts_with("-")) {
 				res[""].push_back(std::string{a});
 			} else {
