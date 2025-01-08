@@ -12,7 +12,7 @@ namespace xxx::sig {
 
 /// @brief	Disable several signal handlers in this program.
 ///		It disables the following signals: Interrupt, Terminate, Hangup.
-void disable_signal_handlers();
+void disable_signal_handlers() noexcept;
 
 ///	@brief 	Wait for one of the following signals: Interrupt, Terminate, Hangup.
 ///	@param[in]	timeout		The timeout.
