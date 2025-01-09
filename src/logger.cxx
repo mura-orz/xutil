@@ -232,7 +232,7 @@ void logger_t::open_logfile_(std::filesystem::path const& path, std::optional<st
 	} catch (...) {
 		path_.clear();
 		daily_ = std::nullopt;
-		throw;	  // Don't take caere of file stream here.
+		throw;	  // Don't take care of file stream here.
 	}
 }
 
@@ -254,7 +254,7 @@ void logger_t::set_path(std::filesystem::path const& path, bool daily) {
 	if (needs_rotation(lt)) {
 		std::filesystem::rename(path_, get_previous_path_());
 	}
-	// Opens a newvlog file if the path is not empty.
+	// Opens a new log file if the path is not empty.
 	if (daily) {
 		open_logfile_(path, lt);
 	} else {

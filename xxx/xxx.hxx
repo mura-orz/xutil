@@ -38,18 +38,18 @@ namespace xxx {
 std::uint32_t get_version() noexcept;
 
 ///	@brief	Gets major version of the @p version.
-///		If backward compatibility is broken, this version is imcremented.
+///		If backward compatibility is broken, this version is incremented.
 ///	@param[in]	version		The library versions, xxx_version macro or result of xxx_version()
 ///	@return		Major version of the @p version.
 inline std::uint32_t get_major_version(std::uint32_t version) noexcept { return static_cast<std::uint32_t>((version >> 24) & 0x000000FF); }
 ///	@brief	Gets minor version of the @p version.
-///		If new feature with backward compatibility is added, this version is imcremented.
+///		If new feature with backward compatibility is added, this version is incremented.
 ///		If the major version increases, this version is reset to zero.
 ///	@param[in]	version		The library versions, xxx_version macro or result of xxx_version()
 ///	@return		Minor version of the @p version.
 inline std::uint32_t get_minor_version(std::uint32_t version) noexcept { return static_cast<std::uint32_t>((version >> 16) & 0x000000FF); }
 ///	@brief	Gets revision of the @p version.
-///		If bug-fixes or trival improvements are added, this version is imcremented.
+///		If bug-fixes or trival improvements are added, this version is incremented.
 ///		If the minor version increases or resets, this version is reset to zero, too.
 ///	@param[in]	version		The library versions, xxx_version macro or result of xxx_version()
 ///	@return		Revision of the @p version.

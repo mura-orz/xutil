@@ -1,6 +1,6 @@
 /// @file
 /// @brief  SQLite wrapper.
-///	@pre	SQLitete is required.
+///	@pre	SQLite is required.
 ///	@author	Mura.
 
 #ifndef xxx_DB_HXX_

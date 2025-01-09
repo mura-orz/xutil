@@ -96,7 +96,7 @@ public:
 		return state_;
 	}
 
-	///	@brief	Dispacthes the @p action.
+	///	@brief	Dispatches the @p action.
 	///	 	It assumes that dispatch is always called sequentially; otherwise,
 	///	@param[in]	action		Action to dispatch.
 	void dispatch(Action const& action) {
@@ -108,14 +108,14 @@ public:
 			swap(state_, state);
 		}
 		// It assumes that dispatch is always called sequentially; otherwise,
-		// if another dispatch is interrupted here, each listerner of the dispatches refers same the latest state.
+		// if another dispatch is interrupted here, each listener of the dispatches refers same the latest state.
 		{
 			std::shared_lock lock{mutex_};
 			std::ranges::for_each(listeners_, [&](auto const& listener) { listener(state_, action); });
 		}
 	}
 
-	///	@brief	Adds all the listeiners if exist.
+	///	@brief	Adds all the listeners if exist.
 	///	@param[in]	listener	Listener to set.
 	///	@return		Handling identifier of the @p listener.
 	std::size_t add_listener(listener_t listener) {
@@ -132,21 +132,21 @@ public:
 		// The clear_listeners uses hard-delete but always clears all the listeners.
 		listeners_.at(listener) = [](State const&, Action const&) {};
 	}
-	///	@brief	Clears all the listeiners if exist.
+	///	@brief	Clears all the listeners if exist.
 	void clear_listeners() {
 		std::lock_guard lock{mutex_};
 		listeners_.clear();
 	}
 
 	///	@brief	Constructor.
-	///	@param[in]	state		Iniitial state.
+	///	@param[in]	state		Initial state.
 	///	@param[in]	reducer		Reducer of the @p state.
 	store(State const& state, reducer_t reducer) :
 		mutex_{}, state_{state}, reducer_{reducer}, listeners_{} {
 		if (! state_) throw std::invalid_argument(__func__);
 	}
 	///	@brief	Constructor.
-	///	@param[in]	state		Iniitial state.
+	///	@param[in]	state		Initial state.
 	///	@param[in]	reducer		Reducer of the @p state.
 	store(State&& state, reducer_t reducer) :
 		mutex_{}, state_{std::move(state)}, reducer_{reducer}, listeners_{} {
@@ -156,9 +156,9 @@ public:
 
 private:
 	mutable std::shared_mutex mutex_;		 ///< Readers-writer mutex.
-	State					  state_;		 ///< Statw.
+	State					  state_;		 ///< State.
 	reducer_t				  reducer_;		 ///< Reducer.
-	std::vector<listener_t>	  listeners_;	 ///< Listerners.
+	std::vector<listener_t>	  listeners_;	 ///< Listeners.
 };
 
 }	 // namespace xxx::redux
