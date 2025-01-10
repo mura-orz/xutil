@@ -11,6 +11,7 @@
 #include <shared_mutex>
 #include <algorithm>
 #include <any>
+#include <optional>
 #include <functional>
 #include <ranges>
 #include <stdexcept>
@@ -75,7 +76,7 @@ private:
 template<typename State, typename Action>
 class store {
 public:
-	using reducer_t	 = std::function<State(State const&, Action const&)>;	 ///< Type of reducer.
+	using reducer_t	 = std::function<std::optional<State>(State&, Action const&)>;	 ///< Type of reducer.
 	using listener_t = std::function<void(State const&, Action const&)>;	 ///< Type of listener.
 
 	///	@brief	Refers the current state with readers lock.
@@ -99,13 +100,13 @@ public:
 	///	@brief	Dispatches the @p action.
 	///	 	It assumes that dispatch is always called sequentially; otherwise,
 	///	@param[in]	action		Action to dispatch.
-	void dispatch(Action const& action) {
+	virtual void dispatch(Action const& action) {
 		{
 			std::lock_guard lock{mutex_};
-			auto			state = reducer_(state_, action);
-
-			using std::swap;
-			swap(state_, state);
+			if (auto state = reducer_(state_, action); state) {
+				using std::swap;
+				swap(state_, *state);
+			}
 		}
 		// It assumes that dispatch is always called sequentially; otherwise,
 		// if another dispatch is interrupted here, each listener of the dispatches refers same the latest state.
@@ -143,14 +144,12 @@ public:
 	///	@param[in]	reducer		Reducer of the @p state.
 	store(State const& state, reducer_t reducer) :
 		mutex_{}, state_{state}, reducer_{reducer}, listeners_{} {
-		if (! state_) throw std::invalid_argument(__func__);
 	}
 	///	@brief	Constructor.
 	///	@param[in]	state		Initial state.
 	///	@param[in]	reducer		Reducer of the @p state.
 	store(State&& state, reducer_t reducer) :
 		mutex_{}, state_{std::move(state)}, reducer_{reducer}, listeners_{} {
-		if (! state_) throw std::invalid_argument(__func__);
 	}
 	virtual ~store() {}
 
