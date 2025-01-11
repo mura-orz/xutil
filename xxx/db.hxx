@@ -204,7 +204,6 @@ public:
 		step_row();
 	}
 
-#if 0
 	template<typename... Arguments>
 	bool fetch(Arguments&... arguments) {
 		if (! fetch_) { step_row(); }
@@ -215,18 +214,6 @@ public:
 		}
 		return false;
 	}
-#else
-	template<typename... Arguments>
-	bool fetch(std::tuple<Arguments...>& argument) {
-		if (! fetch_) { step_row(); }
-		if (fetch_) {
-			column(argument);
-			fetch_ = false;	   // fetched.
-			return true;
-		}
-		return false;
-	}
-#endif
 
 private:
 	void reset() {
@@ -249,7 +236,6 @@ private:
 		bind<Index + 1>(type, arguments...);
 	}
 
-#if 0
 	template<int Column = 0>
 	void column() {}
 
@@ -258,16 +244,6 @@ private:
 		binds_t<T>::column(statement_, Column, argument);
 		column<Column + 1>(arguments...);
 	}
-#else
-	template<std::size_t Column = 0, typename T>
-	void column(T& t) {
-		if constexpr (Column < std::tuple_size<T>::value) {
-			auto& x = std::get<Column>(t);
-			binds_t<std::remove_reference_t<decltype(x)>>::column(statement_, Column, x);
-			column<Column + 1>(t);
-		}
-	}
-#endif
 
 private:
 	::sqlite3_stmt* statement_ = nullptr;
@@ -345,6 +321,14 @@ public:
 		return s;
 	}
 
+	template<typename T>
+	std::optional<T> select_one(std::string_view sql) {
+		auto s = execute(sql);
+		s.execute();
+		if (T v{}; s.fetch(v)) { return v; }
+		return std::nullopt;
+	}
+
 private:
 	::sqlite3* db_ = nullptr;
 };
@@ -356,13 +340,13 @@ struct binds_t<bool> {
 };
 
 template<typename T>
-struct binds_t<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) <= 4>> {
+struct binds_t<T, std::enable_if_t<(std::is_integral_v<T> || std::is_unsigned_v<T>) && sizeof(T) <= 4>> {
 	static int	bind(::sqlite3_stmt* statement, int index, T argument, bind_type_t) { return ::sqlite3_bind_int(statement, index, static_cast<int>(argument)); }
 	static void column(::sqlite3_stmt* statement, int column, T& argument) { argument = static_cast<T>(::sqlite3_column_int(statement, column)); }
 };
 
 template<typename T>
-struct binds_t<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) == 8>> {
+struct binds_t<T, std::enable_if_t<(std::is_integral_v<T> || std::is_unsigned_v<T>) && sizeof(T) == 8>> {
 	static int	bind(::sqlite3_stmt* statement, int index, T argument, bind_type_t) { return ::sqlite3_bind_int64(statement, index, static_cast<int64_t>(argument)); }
 	static void column(::sqlite3_stmt* statement, int column, T& argument) { argument = static_cast<T>(::sqlite3_column_int64(statement, column)); }
 };
