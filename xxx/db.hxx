@@ -321,10 +321,10 @@ public:
 		return s;
 	}
 
-	template<typename T>
-	std::optional<T> select_one(std::string_view sql) {
+	template<typename T, typename... Arguments>
+	std::optional<T> select_one(std::string_view sql, Arguments const&... args) {
 		auto s = execute(sql);
-		s.execute();
+		s.execute(args...);
 		if (T v{}; s.fetch(v)) { return v; }
 		return std::nullopt;
 	}
