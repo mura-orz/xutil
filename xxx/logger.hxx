@@ -187,9 +187,9 @@ dump_(std::ostream& os, std::unordered_set<T> const& head, Args... args) {
 
 #if defined(__cpp_char8_t) && 201803 <= __cpp_char8_t
 
-template<typename T, typename... Args>
+template<typename T>
 inline void
-dump_(std::ostream& os, char8_t ch, Args... args) {
+dump_(std::ostream& os, char8_t ch) {
 	if (ch < 0x80) {
 		os << static_cast<char>(ch);
 	} else {
@@ -197,9 +197,9 @@ dump_(std::ostream& os, char8_t ch, Args... args) {
 	}
 }
 
-template<typename T, typename... Args>
+template<typename T>
 inline void
-dump_(std::ostream& os, std::u8string_view const& head, Args... args) {
+dump_(std::ostream& os, std::u8string_view const& head) {
 	std::for_each(head.cbegin(), head.cend(), [&](auto const ch) { dump_(os, ch); });
 }
 
