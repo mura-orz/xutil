@@ -107,12 +107,12 @@ enum class db_flag_t {
 constexpr inline auto to(bind_type_t type) { return (type == bind_type_t::Static) ? SQLITE_STATIC : SQLITE_TRANSIENT; }
 
 template<typename T>
-constexpr inline auto const to(std::set<T> const& flags, unsigned initial = 0u) {
+constexpr inline auto to(std::set<T> const& flags, unsigned initial = 0u) {
 	using std::cbegin, std::cend;	 // std::range::begin,end
 	return std::accumulate(cbegin(flags), cend(flags), std::move(initial), [](auto&& s, auto const& a) { s |= static_cast<unsigned>(a); return s; });
 }
 
-constexpr inline auto const from_error_code(int code) {
+constexpr inline auto from_error_code(int code) {
 	using enum error_code_t;
 	switch (code) {
 	case SQLITE_ABORT: return Aborted;
@@ -152,7 +152,7 @@ public:
 	explicit exception_t(::sqlite3_stmt* statement) :
 		exception_t(::sqlite3_db_handle(statement)) {}
 
-	auto const code() const noexcept { return code_; }
+	auto code() const noexcept { return code_; }
 
 private:
 	error_code_t code_;
