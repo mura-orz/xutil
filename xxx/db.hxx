@@ -29,6 +29,7 @@ template<typename... T>
 struct is_tuple<std::tuple<T...>> : std::true_type {};
 
 using timestamp_t = std::chrono::system_clock::time_point;
+inline auto current_timestamp() { return std::chrono::system_clock::now(); }
 
 enum class error_code_t {
 	Aborted		= SQLITE_ABORT,		   // Aborted
