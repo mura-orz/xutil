@@ -215,6 +215,16 @@ public:
 		}
 		return false;
 	}
+	template<typename... Arguments>
+	bool fetch(std::tuple<Arguments...>& argument) {
+		if (! fetch_) { step_row(); }
+		if (fetch_) {
+			column(argument);
+			fetch_ = false;	   // fetched.
+			return true;
+		}
+		return false;
+	}
 
 private:
 	void reset() {
@@ -242,8 +252,16 @@ private:
 
 	template<int Column = 0, typename T, typename... Arguments>
 	void column(T& argument, Arguments&... arguments) {
-		binds_t<T>::column(statement_, Column, argument);
-		column<Column + 1>(arguments...);
+		if constexpr (is_tuple<std::remove_reference_t<decltype(argument)>>::value) {
+			if constexpr (Column < std::tuple_size<T>::value) {
+				auto& x = std::get<Column>(argument);
+				binds_t<std::remove_reference_t<decltype(x)>>::column(statement_, Column, x);
+				column<Column + 1>(argument);
+			}
+		} else {
+			binds_t<T>::column(statement_, Column, argument);
+			column<Column + 1>(arguments...);
+		}
 	}
 
 private:
