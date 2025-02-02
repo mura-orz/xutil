@@ -56,7 +56,6 @@ target_sources				(xxx	PRIVATE
 	src/config.cxx
 	src/sig.cxx
 	src/sqlite3.c
-	src/sqlite3.c
 )
 target_sources				(xxx	PUBLIC
 	xxx/xxx.hxx
