@@ -52,7 +52,7 @@ bool wait_for_signals(std::chrono::milliseconds const& timeout) {
 	::timespec ts{};
 	ts.tv_sec  = std::chrono::duration_cast<std::chrono::seconds>(timeout).count();
 	ts.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(timeout).count() % std::chrono::duration_cast<std::chrono::nanoseconds>(1s).count();
-	do {
+	for (;;) {
 		::siginfo_t signal{};
 		switch (::sigtimedwait(&ss, &signal, &ts)) {
 		// interrupted by a signal.
@@ -64,15 +64,14 @@ bool wait_for_signals(std::chrono::milliseconds const& timeout) {
 			switch (errno) {
 			case EAGAIN: return false;
 			case EINTR: continue;
-			case EINVAL: throw std::invalid_argument(__func__);
+			case EINVAL: throw std::invalid_argument(__func__+ std::to_string(__LINE__));
 			default:
 				std::error_code const ec{errno, std::system_category()};
-				throw std::system_error{ec, __func__};
+				throw std::system_error{ec, __func__+ std::to_string(__LINE__)};
 			}
 		default: throw std::runtime_error(__func__);
 		}
-	} while (false);
-	throw std::logic_error(__func__);
+	}
 #else
 	// Does not take care of exclusive control here.
 	if (! ::xxx::sig::interrupted_s) {
