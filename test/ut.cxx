@@ -412,16 +412,6 @@ TEST(test_config, OptionsAndFile)
 	std::filesystem::remove("test.conf");
 }
 
-namespace
-{
-
-	bool contains(std::string const &s, std::regex const &re)
-	{
-		return std::regex_match(s.cbegin(), s.cend(), re);
-	};
-
-} // namespace
-
 TEST(test_exception, Dump)
 {
 	// To use << operator; otherwise, xxx::dump_exception() is available instead.
@@ -635,14 +625,14 @@ namespace
 		return oss.str();
 	}
 
-	std::regex const oops_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[F\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*oops\n?$)"};
-	std::regex const err_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[E\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*err\n?$)"};
-	std::regex const warn_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[W\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*warn\n?$)"};
-	std::regex const notice_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[N\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*notice\n?$)"};
-	std::regex const info_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*info\n?$)"};
-	std::regex const trace_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*trace\n?$)"};
-	std::regex const debug_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[D\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*debug\n?$)"};
-	std::regex const verbose_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[V\][0-9a-fA-F]{5,8}\{[^:]+:[0-9_]{5}\}.*verbose\n?$)"};
+	std::regex const oops_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[F\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*oops\n?$)"};
+	std::regex const err_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[E\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*err\n?$)"};
+	std::regex const warn_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[W\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*warn\n?$)"};
+	std::regex const notice_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[N\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*notice\n?$)"};
+	std::regex const info_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*info\n?$)"};
+	std::regex const trace_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*trace\n?$)"};
+	std::regex const debug_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[D\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*debug\n?$)"};
+	std::regex const verbose_re{	R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[V\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*verbose\n?$)"};
 
 } // namespace
 
@@ -662,23 +652,23 @@ TEST(test_logger, Default_logger)
 	logger.set_path(path);
 	logger.oops("oops");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 	logger.set_path(path);
 	logger.err("err");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), err_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, err_re));	}
 	logger.set_path(path);
 	logger.warn("warn");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), warn_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, warn_re));	}
 	logger.set_path(path);
 	logger.notice("notice");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), notice_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, notice_re));	}
 	logger.set_path(path);
 	logger.info("info");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), info_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_re));	}
 	logger.set_path(path);
 	logger.trace("trace");
 	logger.set_path("");
@@ -694,23 +684,23 @@ TEST(test_logger, Default_logger)
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Fatal, "oops");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Error, "err");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), err_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, err_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Warn, "warn");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), warn_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, warn_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Notice, "notice");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), notice_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, notice_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Info, "info");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), info_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Trace, "trace");
 	logger.set_path("");
@@ -741,67 +731,67 @@ TEST(test_logger, Default_logger_all)
 	logger.set_path(path);
 	logger.oops("oops");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 	logger.set_path(path);
 	logger.err("err");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), err_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, err_re));	}
 	logger.set_path(path);
 	logger.warn("warn");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), warn_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, warn_re));	}
 	logger.set_path(path);
 	logger.notice("notice");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), notice_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, notice_re));	}
 	logger.set_path(path);
 	logger.info("info");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), info_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_re));	}
 	logger.set_path(path);
 	logger.trace("trace");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), trace_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, trace_re));	}
 	logger.set_path(path);
 	logger.debug("debug");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), debug_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, debug_re));	}
 	logger.set_path(path);
 	logger.verbose("verbose");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), verbose_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, verbose_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Fatal, "oops");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Error, "err");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), err_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, err_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Warn, "warn");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), warn_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, warn_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Notice, "notice");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), notice_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, notice_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Info, "info");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), info_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Trace, "trace");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), trace_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, trace_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Debug, "debug");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), debug_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, debug_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Verbose, "verbose");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), verbose_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, verbose_re));	}
 }
 
 TEST(test_logger, Logger_level)
@@ -821,7 +811,7 @@ TEST(test_logger, Logger_level)
 	logger.set_path(path);
 	logger.oops("oops");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 	logger.set_path(path);
 	logger.err("err");
 	logger.set_path("");
@@ -853,7 +843,7 @@ TEST(test_logger, Logger_level)
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Fatal, "oops");
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 	logger.set_path(path);
 	logger.log(xxx::log::level_t::Error, "err");
 	logger.set_path("");
@@ -903,12 +893,12 @@ TEST(test_logger, Trace)
 	auto &logger = xxx::log::logger("");
 	logger.set_level(xxx::log::level_t::All);
 
-	std::regex const info_tracer_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\]\{[^:]+:[0-9_]{5}\}.*>>>\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\]\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
-	std::regex const tracer_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*>>>\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
-	std::regex const tracer_arg_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
-	std::regex const tracer_arg_1_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*<<<\(1\)\n?$)"};
-	std::regex const tracer_arg_2_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*<<<\(2\)\n?$)"};
-	std::regex const tracer_arg_3_re{R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\]\{[^:]+:[0-9_]{5}\}.*<<<\(3\)\n?$)"};
+	std::regex const info_tracer_re{	R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*>>>\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[I\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
+	std::regex const tracer_re{			R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*>>>\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
+	std::regex const tracer_arg_re{		R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*<<<\n?$)"};
+	std::regex const tracer_arg_1_re{	R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*<<<\(1\)\n?$)"};
+	std::regex const tracer_arg_2_re{	R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*<<<\(2\)\n?$)"};
+	std::regex const tracer_arg_3_re{	R"(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*>>>ARG\n[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+\+[0-9]{4}\[T\][0-9A-F]{5,}\{[^:]+:[0-9_]{5}\}.*<<<\(3\)\n?$)"};
 
 	logger.set_path("");
 	if (std::filesystem::exists(path))
@@ -920,40 +910,40 @@ TEST(test_logger, Trace)
 		xxx::log::tracer_t l(logger);
 	}
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, tracer_re));	}
 	logger.set_path(path);
 	{
 		xxx::log::tracer_t l(logger, "", xxx::log::level_t::Info);
 	}
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), info_tracer_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_tracer_re));	}
 	logger.set_path(path);
 	{
 		xxx::log::tracer_t l(logger, "ARG");
 	}
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_arg_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, tracer_arg_re));	}
 	logger.set_path(path);
 	{
 		xxx::log::tracer_t l(logger, "ARG");
 		l.set_result("1");
 	}
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_arg_1_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, tracer_arg_1_re));	}
 	logger.set_path(path);
 	{
 		xxx::log::tracer_t l(logger, "ARG");
 		l.set_result("2"s);
 	}
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_arg_2_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, tracer_arg_2_re));	}
 	logger.set_path(path);
 	{
 		xxx::log::tracer_t l(logger, "ARG");
 		l.set_result(3);
 	}
 	logger.set_path("");
-	EXPECT_TRUE(contains(read_and_clear_log(path), tracer_arg_3_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, tracer_arg_3_re));	}
 	logger.set_path(path);
 
 	if (std::filesystem::exists(path))
@@ -977,67 +967,67 @@ TEST(test_logger, Another_logger)
 		logger.set_path(path);
 		logger.oops("oops");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 		logger.set_path(path);
 		logger.err("err");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), err_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, err_re));	}
 		logger.set_path(path);
 		logger.warn("warn");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), warn_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, warn_re));	}
 		logger.set_path(path);
 		logger.notice("notice");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), notice_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, notice_re));	}
 		logger.set_path(path);
 		logger.info("info");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), info_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_re));	}
 		logger.set_path(path);
 		logger.trace("trace");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), trace_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, trace_re));	}
 		logger.set_path(path);
 		logger.debug("debug");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), debug_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, debug_re));	}
 		logger.set_path(path);
 		logger.verbose("verbose");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), verbose_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, verbose_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Fatal, "oops");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), oops_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, oops_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Error, "err");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), err_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, err_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Warn, "warn");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), warn_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, warn_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Notice, "notice");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), notice_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, notice_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Info, "info");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), info_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, info_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Trace, "trace");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), trace_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, trace_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Debug, "debug");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), debug_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, debug_re));	}
 		logger.set_path(path);
 		logger.log(xxx::log::level_t::Verbose, "verbose");
 		logger.set_path("");
-		EXPECT_TRUE(contains(read_and_clear_log(path), verbose_re));
+	{	auto const m = read_and_clear_log(path);	EXPECT_TRUE(std::regex_match(m, verbose_re));	}
 	}
 	xxx::log::remove_logger("tag");
 	EXPECT_THROW(xxx::log::logger("tag"), std::invalid_argument);
