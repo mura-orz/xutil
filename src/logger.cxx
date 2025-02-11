@@ -82,7 +82,7 @@ void logger_t::log_(level_t level, std::optional<std::source_location> const& po
 			<< std::setfill('0') << std::setw(6) << ms.count()
 			<< std::put_time(&lt, "%z")
 			<< Lv[static_cast<int>(level)];
-		oss << std::setfill('_') << std::setw(5) << std::hex << std::uppercase << std::this_thread::get_id();
+		oss << std::setfill('_') << std::setw(5) << std::hex << std::uppercase << std::this_thread::get_id() << std::dec;
 		if (pos) {
 			std::cmatch result;
 			oss << "{" << filename << ':' << std::setw(5) << std::setfill('_') << pos->line() << "} ";
