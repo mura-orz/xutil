@@ -20,25 +20,29 @@ namespace xxx {
 template<typename T>
 class queue {
 public:
+	///	@brief	Terminated
+	class terminated_error : public std::runtime_error {
+	public:
+		///	@brief	Constructor.
+		terminated_error() :
+			std::runtime_error("terminated") {}
+	};
+
 	/// @brief 	Enqueues an event.
 	/// @param[in]	t	The event to push.
-	/// @return	It returns true if queued; otherwise, it returns false.
-	bool enqueue(T const& t) {
+	void enqueue(T const& t) {
 		std::lock_guard lock{mutex_};
-		if (finished_) return false;
+		if (finished_) throw terminated_error{};
 		queue_.push_back(t);
 		condition_.notify_one();
-		return true;
 	}
 	/// @brief 	Enqueues an event.
 	/// @param[in]	t	The event to push.
-	/// @return	It returns true if queued; otherwise, it returns false.
-	bool enqueue(T&& t) {
+	void enqueue(T&& t) {
 		std::lock_guard lock{mutex_};
-		if (finished_) return false;
+		if (finished_) throw terminated_error{};
 		queue_.emplace_back(std::move(t));
 		condition_.notify_one();
-		return true;
 	}
 	/// @brief 	Dequeues an event.
 	///		If this queue is empty, this method waits a new event.
