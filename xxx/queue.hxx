@@ -20,42 +20,40 @@ namespace xxx {
 template<typename T>
 class queue {
 public:
-	///	@brief	Terminated
-	class terminated_error : public std::runtime_error {
-	public:
-		///	@brief	Constructor.
-		terminated_error() :
-			std::runtime_error("terminated") {}
-	};
-
 	/// @brief 	Enqueues an event.
 	/// @param[in]	t	The event to push.
-	void enqueue(T const& t) {
+	/// @return	It returns true if queued; otherwise, it returns false.
+	bool enqueue(T const& t) {
 		std::lock_guard lock{mutex_};
-		if (finished_) throw terminated_error{};
+		if (finished_) return false;
 		queue_.push_back(t);
 		condition_.notify_one();
+		return true;
 	}
 	/// @brief 	Enqueues an event.
 	/// @param[in]	t	The event to push.
-	void enqueue(T&& t) {
+	/// @return	It returns true if queued; otherwise, it returns false.
+	bool enqueue(T&& t) {
 		std::lock_guard lock{mutex_};
-		if (finished_) throw terminated_error{};
+		if (finished_) return false;
 		queue_.emplace_back(std::move(t));
 		condition_.notify_one();
+		return true;
 	}
 	/// @brief 	Dequeues an event.
 	///		If this queue is empty, this method waits a new event.
 	/// @param[in]	t	Next event.
-	void dequeue(T& t) {
+	/// @return	It returns true if dequeued; otherwise, it returns false.
+	bool dequeue(T& t) {
 		std::unique_lock lock{mutex_};
 		while (queue_.empty()) {
-			if (finished_) throw terminated_error{};
+			if (finished_) return false;
 			condition_.wait(lock);
 		}
-		if (finished_) throw terminated_error{};
+		if (finished_) return false;
 		t = queue_.front();	   // might cause an exception.
 		queue_.pop_front();
+		return true;
 	}
 	/// @brief 	Dequeues an event.
 	///		If this queue is empty, this method waits a new event.
