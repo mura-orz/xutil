@@ -5,6 +5,7 @@
 
 #include <xxx/sig.hxx>
 
+#include <thread>
 #include <system_error>
 #include <csignal>
 #include <stdexcept>
@@ -15,7 +16,9 @@ static std::sig_atomic_t volatile interrupted_s;	// std::atomic<bool>
 extern "C" void handle_signal(int signal) noexcept {
 	switch (signal) {
 	case SIGINT:
+#ifndef _WIN32
 	case SIGHUP:
+#endif
 	case SIGTERM:
 		interrupted_s = true;
 		break;
@@ -74,11 +77,11 @@ bool wait_for_signals(std::chrono::milliseconds const& timeout) {
 	}
 #else
 	// Does not take care of exclusive control here.
-	if (! ::xxx::sig::interrupted_s) {
+	if (! interrupted_s) {
 		std::this_thread::sleep_for(timeout);
 	}
-	auto const interrupted	  = ::xxx::sig::interrupted_s;
-	::xxx::sig::interrupted_s = false;
+	auto const interrupted	  = interrupted_s;
+	interrupted_s = false;
 	return interrupted != false;
 #endif
 }
