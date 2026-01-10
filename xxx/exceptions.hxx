@@ -25,6 +25,7 @@ namespace xxx {
 ///	@return		If an exception occurred, it returns it as std::exception_ptr;
 ///				otherwise, it returns nullptr as std::exception_ptr.
 template<typename P>
+requires std::is_invocable_v<P>
 inline std::exception_ptr
 suppress_exceptions(P const& procedure) noexcept {
 	if constexpr (noexcept(procedure())) {
@@ -44,6 +45,7 @@ suppress_exceptions(P const& procedure) noexcept {
 ///	@tparam		P	function object of procedure
 ///	@param[in]		procedure	Procedure
 template<typename P>
+requires std::is_invocable_v<P>
 inline void
 ignore_exceptions(P const& procedure) noexcept {
 	if constexpr (noexcept(procedure())) {
@@ -60,6 +62,7 @@ ignore_exceptions(P const& procedure) noexcept {
 ///	@param[in]		handler		Exception handler,
 ///								which requires only one const reference of std::exception parameter.
 template<typename P, typename H>
+requires std::is_invocable_v<P>
 inline void
 ignore_exceptions(P const& procedure, H const& handler) noexcept {
 	//	This method is just for typical wrapper.

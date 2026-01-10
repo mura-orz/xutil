@@ -13,6 +13,7 @@ namespace xxx {
 ///	@brief	The @b finally handler called when scoped-out.
 ///	@tparam		P	function object of procedure
 template<typename P>
+requires std::is_invocable_v<P>
 class finally_t {
 public:
 	///	@brief	Sets the @p finally handler.
